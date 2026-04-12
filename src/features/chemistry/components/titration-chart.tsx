@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, useTransition, useEffect, useRef } from "react"
 
 import { Beaker } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -18,6 +18,38 @@ type TitrationChartProps = {
 export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }: TitrationChartProps) {
   const { t } = useTranslation()
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const [isPending, startTransition] = useTransition()
+
+  // Local concentration state — updates immediately so sliders feel instant.
+  // The actual chart re-computation is deferred via startTransition.
+  const [localConc, setLocalConc] = useState(() =>
+    activeSlots.map((s) => ({ CA: s.concentrationCA, CB: s.concentrationCB }))
+  )
+
+  // Sync display state when the acid selection changes (different slot identity)
+  const slotIdsKey = activeSlots.map((s) => s.acid.id).join(",")
+  const prevKeyRef = useRef(slotIdsKey)
+  useEffect(() => {
+    if (prevKeyRef.current !== slotIdsKey) {
+      prevKeyRef.current = slotIdsKey
+      setLocalConc(activeSlots.map((s) => ({ CA: s.concentrationCA, CB: s.concentrationCB })))
+    }
+  }, [slotIdsKey, activeSlots])
+
+  const handleConc = (slotIndex: number, isBase: boolean, value: number) => {
+    // Instant slider feedback
+    setLocalConc((prev) => {
+      const next = [...prev]
+      next[slotIndex] = isBase
+        ? { ...next[slotIndex], CB: value }
+        : { ...next[slotIndex], CA: value }
+      return next
+    })
+    // Defer expensive useMemo recalculation to keep slider at 60fps
+    startTransition(() => {
+      onConcentrationChange(slotIndex, isBase, value)
+    })
+  }
 
   const chartData = useMemo(
     () =>
@@ -70,11 +102,11 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{t("charts.analyte")}</span>
-                      <span className="font-mono text-xs tabular-nums">{slot.concentrationCA.toFixed(2)} M</span>
+                      <span className="font-mono text-xs tabular-nums">{(localConc[slotIndex]?.CA ?? slot.concentrationCA).toFixed(2)} M</span>
                     </div>
                     <Slider
-                      value={[slot.concentrationCA]}
-                      onValueChange={(v) => onConcentrationChange(slotIndex, false, v[0])}
+                      value={[localConc[slotIndex]?.CA ?? slot.concentrationCA]}
+                      onValueChange={(v) => handleConc(slotIndex, false, v[0])}
                       min={0.01}
                       max={2}
                       step={0.01}
@@ -84,11 +116,11 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
                   <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted-foreground">{t("charts.titrant")}</span>
-                      <span className="font-mono text-xs tabular-nums">{slot.concentrationCB.toFixed(2)} M</span>
+                      <span className="font-mono text-xs tabular-nums">{(localConc[slotIndex]?.CB ?? slot.concentrationCB).toFixed(2)} M</span>
                     </div>
                     <Slider
-                      value={[slot.concentrationCB]}
-                      onValueChange={(v) => onConcentrationChange(slotIndex, true, v[0])}
+                      value={[localConc[slotIndex]?.CB ?? slot.concentrationCB]}
+                      onValueChange={(v) => handleConc(slotIndex, true, v[0])}
                       min={0.01}
                       max={2}
                       step={0.01}
@@ -100,7 +132,8 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
           </div>
         )}
 
-        {/* Chart */}
+        {/* Chart – dims slightly while the deferred computation is in flight */}
+        <div style={{ opacity: isPending ? 0.55 : 1, transition: "opacity 80ms" }}>
         <SvgChart
           xLabel={t("charts.xVolume")}
           yLabel={t("charts.yPh")}
@@ -146,6 +179,7 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
             </>
           )}
         </SvgChart>
+        </div>
 
         {/* Equivalence points table */}
         {equivalencePoints.length > 0 && (
