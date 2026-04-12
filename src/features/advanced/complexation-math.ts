@@ -25,6 +25,23 @@ import type { MetalRecord, LigandRecord, MetalLigandEntry } from "@/features/adv
 // Re-export so callers don't need two imports
 export type { MetalRecord, LigandRecord, MetalLigandEntry }
 
+const SUBSCRIPTS = ["₀", "₁", "₂", "₃", "₄", "₅", "₆", "₇", "₈", "₉"] as const
+
+export function toUnicodeSubscript(value: number): string {
+  return String(value)
+    .split("")
+    .map((char) => SUBSCRIPTS[Number(char) as keyof typeof SUBSCRIPTS] ?? char)
+    .join("")
+}
+
+export function formatComplexSpecies(metalSymbol: string, ligandAbbrev: string, stoichiometry = 1): string {
+  if (stoichiometry === 1) {
+    return `[${metalSymbol}${ligandAbbrev}]`
+  }
+
+  return `[${metalSymbol}${ligandAbbrev}${toUnicodeSubscript(stoichiometry)}]`
+}
+
 // ────────────────────────────────────────────────────────────────────────────
 // LIGAND ALPHA FRACTION
 // ────────────────────────────────────────────────────────────────────────────
@@ -180,19 +197,16 @@ export function buildEquilibriumEquations(
   const { logKn, logBeta } = entry
 
   const stepwise = logKn.map((lk, i) => {
-    const nPrev = i === 0 ? "" : i === 1 ? "" : String(i)
-    const nCurr = i + 1 === 1 ? "" : String(i + 1)
-    const left = i === 0 ? `${M} + ${L}` : `[${M}${L}${nPrev}] + ${L}`
-    const right = `[${M}${L}${nCurr}]`
-    return { equation: `${left}  ⇌  ${right}`, logK: lk, n: i + 1 }
+    const left = i === 0 ? `${M} + ${L}` : `${formatComplexSpecies(M, L, i)} + ${L}`
+    const right = formatComplexSpecies(M, L, i + 1)
+    return { equation: `${left} <=> ${right}`, logK: lk, n: i + 1 }
   })
 
   const overall = logBeta.map((lb, i) => {
     const n = i + 1
-    const nStr = n === 1 ? "" : String(n)
     const nLStr = n === 1 ? L : `${n}${L}`
     return {
-      equation: `${M} + ${nLStr}  ⇌  [${M}${L}${nStr}]`,
+      equation: `${M} + ${nLStr} <=> ${formatComplexSpecies(M, L, n)}`,
       logBeta: lb,
       n,
     }
@@ -230,7 +244,7 @@ export function buildPredominanceSegments(
     if (dom !== prev || i === N) {
       const end = logL
       const n = prev
-      const label = n === 0 ? metalSymbol : `[${metalSymbol}${ligandAbbrev}${n === 1 ? "" : n}]`
+      const label = n === 0 ? metalSymbol : formatComplexSpecies(metalSymbol, ligandAbbrev, n)
       segs.push({ x1: start, x2: end, speciesIndex: n, label })
       start = logL
       prev = dom

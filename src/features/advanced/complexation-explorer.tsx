@@ -1,6 +1,7 @@
 import { useState, useMemo, useId } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ChemicalFormula } from "@/components/shared/chemical-formula"
 import { Slider } from "@/components/ui/slider"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,7 +12,7 @@ import {
 import {
   calcLogKfPrime, calcLogKfDoublePrime, calcMinTitrationPH,
   calcAlphaLigand, buildConditionalCurve, buildAlphaSeries,
-  buildEquilibriumEquations, buildPredominanceSegments,
+  buildEquilibriumEquations, buildPredominanceSegments, formatComplexSpecies,
 } from "@/features/advanced/complexation-math"
 import type { Locale } from "@/features/chemistry/types/models"
 
@@ -141,8 +142,8 @@ export function ComplexationExplorer({ locale }: Props) {
             <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent className="max-h-72">
               {allLigands.map((l) => (
-                <SelectItem key={l.id} value={l.id} className="text-xs">
-                  <span className="font-mono mr-1">{l.abbreviation}</span>
+                <SelectItem key={l.id} value={l.id} className="text-xs" textValue={`${l.formula} ${l.label[locale]}`}>
+                  <ChemicalFormula formula={l.formula} className="mr-1 text-xs text-foreground" />
                   <span className="text-muted-foreground">· {l.label[locale]}</span>
                 </SelectItem>
               ))}
@@ -345,7 +346,7 @@ export function ComplexationExplorer({ locale }: Props) {
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Constantes escalonadas</p>
                   {stepwise.map(({ equation, logK, n }) => (
                     <div key={n} className="flex items-center justify-between gap-2 rounded border border-border/30 bg-muted/20 px-3 py-1.5">
-                      <span className="font-mono text-[11px] text-foreground">{equation}</span>
+                      <ChemicalFormula formula={equation} className="text-[11px] text-foreground" />
                       <span className={`font-mono text-[11px] font-semibold ${kfColor(logK * 2)} shrink-0`}>
                         K<sub>{n}</sub> = 10<sup>{logK.toFixed(2)}</sup>
                       </span>
@@ -358,7 +359,7 @@ export function ComplexationExplorer({ locale }: Props) {
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Constantes globales β</p>
                   {overall.map(({ equation, logBeta, n }) => (
                     <div key={n} className="flex items-center justify-between gap-2 rounded border border-border/30 bg-muted/20 px-3 py-1.5">
-                      <span className="font-mono text-[11px] text-foreground">{equation}</span>
+                      <ChemicalFormula formula={equation} className="text-[11px] text-foreground" />
                       <span className={`font-mono text-[11px] font-semibold ${kfColor(logBeta)} shrink-0`}>
                         β<sub>{n}</sub> = 10<sup>{logBeta.toFixed(2)}</sup>
                       </span>
@@ -369,8 +370,8 @@ export function ComplexationExplorer({ locale }: Props) {
                 {/* Mass balance */}
                 <div className="rounded border border-border/30 bg-muted/10 px-3 py-2 space-y-0.5 text-[10px] text-muted-foreground font-mono">
                   <p className="text-muted-foreground/70 uppercase text-[9px] tracking-widest mb-1">Balance de masas</p>
-                  <p>C<sub>T</sub> = [{metal.symbol}] + [{metal.symbol}{ligand.abbreviation}]{overall.length > 1 ? ` + … + [${metal.symbol}${ligand.abbreviation}${overall.length}]` : ""}</p>
-                  <p>C<sub>L</sub> = [{ligand.abbreviation}] + [{metal.symbol}{ligand.abbreviation}] + 2[{metal.symbol}{ligand.abbreviation}₂] + … + {overall.length}[{metal.symbol}{ligand.abbreviation}{overall.length > 1 ? overall.length : ""}]</p>
+                  <p>C<sub>T</sub> = [{metal.symbol}] + {formatComplexSpecies(metal.symbol, ligand.abbreviation)} + … + [{metal.symbol}{ligand.abbreviation}ₙ]</p>
+                  <p>C<sub>L</sub> = [{ligand.abbreviation}] + {formatComplexSpecies(metal.symbol, ligand.abbreviation)} + 2{formatComplexSpecies(metal.symbol, ligand.abbreviation, 2)} + … + n[{metal.symbol}{ligand.abbreviation}ₙ]</p>
                 </div>
               </div>
             )
@@ -565,7 +566,7 @@ function AlphaChart({
   const xTicks = [-8, -6, -4, -2, 0]
 
   const speciesLabel = (i: number) =>
-    i === 0 ? metalSymbol : `[${metalSymbol}${ligandAbbrev}${i === 1 ? "" : i}]`
+    i === 0 ? metalSymbol : formatComplexSpecies(metalSymbol, ligandAbbrev, i)
 
   return (
     <div className="space-y-1">
@@ -624,7 +625,7 @@ function AlphaChart({
 
 // ── Predominance row ──────────────────────────────────────────────────────────
 function PredominanceRow({
-  uid: _uid, segments, metalSymbol, baseColor,
+  segments, metalSymbol, baseColor,
 }: {
   uid: string
   segments: ReturnType<typeof buildPredominanceSegments>
