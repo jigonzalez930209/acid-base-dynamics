@@ -5,6 +5,8 @@ import { SvgChart, buildLinePath } from "@/components/app/svg-chart"
 import { buildBufferCapacitySeries } from "@/features/advanced/advanced-math"
 import type { ActiveSlot } from "@/features/chemistry/types/models"
 
+const STAGGER_PH = 0.9  // min pH gap before bumping to a new row
+
 type Props = { activeSlots: ActiveSlot[]; globalPH: number }
 
 const ZOOM_MAX = 0.3
@@ -17,6 +19,28 @@ export function BufferCapacityChart({ activeSlots, globalPH }: Props) {
     () => activeSlots.map((slot) => ({ ...slot, points: buildBufferCapacitySeries(slot.pKas) })),
     [activeSlots]
   )
+
+  const pkaMarkers = useMemo(() => {
+    const flat = activeSlots
+      .flatMap((slot) =>
+        slot.pKas.map((pKa, i) => ({
+          id: `${slot.acid.id}-pka${i}`,
+          pKa,
+          color: slot.color,
+          label: `pKa${i + 1}=${pKa.toFixed(1)}`,
+        }))
+      )
+      .sort((a, b) => a.pKa - b.pKa)
+
+    const levelMaxPKa: number[] = []
+    return flat.map((m) => {
+      let level = 0
+      while (levelMaxPKa[level] !== undefined && m.pKa - levelMaxPKa[level] < STAGGER_PH)
+        level++
+      levelMaxPKa[level] = m.pKa
+      return { ...m, level }
+    })
+  }, [activeSlots])
 
   const fullMax = useMemo(() => {
     let max = 0.05
@@ -54,19 +78,17 @@ export function BufferCapacityChart({ activeSlots, globalPH }: Props) {
                   fill="none" stroke={color} strokeWidth={2} strokeDasharray={dash} />
               ))}
 
-              {/* pKa markers per slot */}
-              {activeSlots.flatMap((slot) =>
-                slot.pKas.map((pKa, i) => (
-                  <g key={`${slot.acid.id}-pka${i}`}>
-                    <line x1={mapX(pKa)} y1={top} x2={mapX(pKa)} y2={top + height}
-                      stroke={slot.color} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="3 3" />
-                    <text x={mapX(pKa) + 3} y={top + 11} fontSize={8}
-                      fill={slot.color} fillOpacity={0.9} style={{ userSelect: "none" }}>
-                      pKa{i + 1}={pKa.toFixed(1)}
-                    </text>
-                  </g>
-                ))
-              )}
+              {/* pKa markers — staggered to avoid overlap */}
+              {pkaMarkers.map(({ id, pKa, color, label, level }) => (
+                <g key={id}>
+                  <line x1={mapX(pKa)} y1={top} x2={mapX(pKa)} y2={top + height}
+                    stroke={color} strokeOpacity={0.5} strokeWidth={1} strokeDasharray="3 3" />
+                  <text x={mapX(pKa) + 3} y={top + 11 + level * 11} fontSize={8}
+                    fill={color} fillOpacity={0.9} style={{ userSelect: "none" }}>
+                    {label}
+                  </text>
+                </g>
+              ))}
 
               {/* current pH line */}
               <line x1={mapX(globalPH)} y1={top} x2={mapX(globalPH)} y2={top + height}
