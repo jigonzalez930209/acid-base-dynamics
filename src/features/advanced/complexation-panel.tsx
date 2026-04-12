@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ComplexationPanelSparkline } from "@/features/advanced/complexation-panel-sparkline"
 import { Slider } from "@/components/ui/slider"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
@@ -135,7 +136,7 @@ export function ComplexationPanel({ locale }: Props) {
           </div>
 
           {/* αY⁴⁻ vs pH mini sparkline */}
-          <AlphaYSparkline currentPH={pH} />
+          <ComplexationPanelSparkline currentPH={pH} />
         </TabsContent>
 
         {/* ── Stepwise (ammonia) tab ─────────────────────────────────── */}
@@ -183,63 +184,6 @@ export function ComplexationPanel({ locale }: Props) {
           })}
         </TabsContent>
       </Tabs>
-    </div>
-  )
-}
-
-// ── αY⁴⁻ vs pH sparkline ────────────────────────────────────────────────────
-function AlphaYSparkline({ currentPH }: { currentPH: number }) {
-  const { t } = useTranslation()
-  const W = 360
-  const H = 60
-  const PAD_L = 8
-  const PAD_R = 8
-  const PAD_T = 6
-  const PAD_B = 14
-
-  const iW = W - PAD_L - PAD_R
-  const iH = H - PAD_T - PAD_B
-
-  const points: [number, number][] = []
-  for (let i = 0; i <= 280; i++) {
-    const ph = (i / 280) * 14
-    const a = calcAlphaY4(ph)
-    points.push([ph, a])
-  }
-
-  const toX = (ph: number) => PAD_L + (ph / 14) * iW
-  const toY = (a: number)  => PAD_T + iH - a * iH
-
-  const d = points
-    .map(([ph, a], i) => `${i === 0 ? "M" : "L"}${toX(ph).toFixed(1)},${toY(a).toFixed(1)}`)
-    .join(" ")
-
-  const cx = toX(currentPH)
-  const cy = toY(calcAlphaY4(currentPH))
-
-  return (
-    <div className="space-y-1">
-      <p className="text-[10px] text-muted-foreground">{t("advanced.complexation.sparklineLabel")}</p>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full max-w-md rounded border border-border/30 bg-muted/10"
-        aria-hidden="true"
-      >
-        {/* axes */}
-        <line x1={PAD_L} y1={PAD_T} x2={PAD_L} y2={PAD_T + iH} stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} />
-        <line x1={PAD_L} y1={PAD_T + iH} x2={PAD_L + iW} y2={PAD_T + iH} stroke="currentColor" strokeOpacity={0.2} strokeWidth={1} />
-        {/* x tick labels */}
-        {[0, 2, 4, 6, 8, 10, 12, 14].map((ph) => (
-          <text key={ph} x={toX(ph)} y={H - 2} textAnchor="middle" fontSize={7} fill="currentColor" opacity={0.4}>
-            {ph}
-          </text>
-        ))}
-        {/* curve */}
-        <path d={d} fill="none" stroke="#38bdf8" strokeWidth={1.5} />
-        {/* current pH marker */}
-        <line x1={cx} y1={PAD_T} x2={cx} y2={PAD_T + iH} stroke="#f59e0b" strokeWidth={1} strokeDasharray="2,2" />
-        <circle cx={cx} cy={cy} r={3} fill="#f59e0b" />
-      </svg>
     </div>
   )
 }
