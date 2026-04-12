@@ -11,7 +11,7 @@ export function LanguageSwitcher() {
   const language = i18n.resolvedLanguage === "en" ? "en" : "es"
 
   return (
-    <div className="flex rounded-md border bg-muted/40 p-0.5">
+    <div className="flex rounded border bg-muted/40 p-0 text-nowrap">
       {LANGUAGES.map((option) => (
         <button
           key={option.code}
