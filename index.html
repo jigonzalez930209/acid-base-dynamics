@@ -12,7 +12,7 @@
     />
     <meta
       name="keywords"
-      content="acid base dynamics, especiacion, titulacion, equilibrio acido-base, pKa, fracciones alpha, quimica interactiva, graficas cientificas"
+      content="acid base dynamics, especiacion, titulacion, equilibrio acido-base, pKa, fracciones alpha, constante formacion Kf, equilibrio complejacion EDTA, Nernst redox, Ksp precipitacion, quimica analitica interactiva, graficas cientificas"
     />
     <meta name="author" content="jigonzalez930209" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
@@ -30,17 +30,19 @@
       property="og:description"
       content="Plataforma interactiva para especiacion, titulacion y equilibrio acido-base con graficas cientificas y comparacion de sistemas."
     />
-    <meta property="og:image" content="https://jigonzalez930209.github.io/acid-base-dynamics/og-image.svg" />
-    <meta property="og:image:type" content="image/svg+xml" />
+    <meta property="og:image" content="https://jigonzalez930209.github.io/acid-base-dynamics/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Acid Base Dynamics — plataforma de equilibrios quimicos interactiva" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Acid Base Dynamics | Especiacion y titulacion quimica interactiva" />
     <meta
       name="twitter:description"
       content="Plataforma interactiva para especiacion, titulacion y equilibrio acido-base con graficas cientificas y comparacion de sistemas."
     />
-    <meta name="twitter:image" content="https://jigonzalez930209.github.io/acid-base-dynamics/og-image.svg" />
+    <meta name="twitter:image" content="https://jigonzalez930209.github.io/acid-base-dynamics/og-image.png" />
+    <meta name="twitter:image:alt" content="Acid Base Dynamics — plataforma de equilibrios quimicos interactiva" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -50,11 +52,29 @@
         "description": "Acid Base Dynamics es una plataforma interactiva para especiacion, titulacion y equilibrio acido-base, con graficas cientificas, pKa y fracciones alpha.",
         "applicationCategory": "EducationalApplication",
         "operatingSystem": "Web",
-        "inLanguage": ["es", "en"]
+        "inLanguage": ["es", "en"],
+        "featureList": [
+          "Curvas de especiacion acido-base",
+          "Titulacion potenciometrica",
+          "Equilibrios de complejacion EDTA Kf Kf' Kf''",
+          "Electroquimica ecuacion de Nernst",
+          "Precipitacion Ksp",
+          "Capacidad tampon beta",
+          "Mapas de predominio",
+          "Exportacion CSV"
+        ],
+        "educationalLevel": "university",
+        "teaches": "Quimica analitica, equilibrio acido-base, complejometria, redox, precipitacion"
       }
     </script>
   </head>
   <body>
+    <noscript>
+      <style>body{font-family:sans-serif;padding:2rem;max-width:700px;margin:auto}</style>
+      <h1>Acid Base Dynamics</h1>
+      <p>Plataforma interactiva de quimica analitica: especiacion, titulacion, equilibrios de complejacion (EDTA, Kf, Kf', Kf''), Nernst (redox) y precipitacion (Ksp). Requiere JavaScript.</p>
+      <p><a href="https://jigonzalez930209.github.io/acid-base-dynamics/">https://jigonzalez930209.github.io/acid-base-dynamics/</a></p>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
