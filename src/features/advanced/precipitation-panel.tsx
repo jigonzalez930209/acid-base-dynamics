@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useTranslation } from "react-i18next"
 
+import { ChemicalFormula } from "@/components/shared/chemical-formula"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Slider } from "@/components/ui/slider"
 import { HYDROXIDE_DATA } from "@/features/advanced/precipitation-data"
@@ -48,7 +49,11 @@ export function PrecipitationPanel({ locale }: Props) {
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{t("advanced.precipitation.concentration")}</span>
-            <span className="font-mono text-foreground">{metalConc.toExponential(2)} mol/L</span>
+            <span className="inline-flex items-center gap-1 font-mono text-foreground">
+              <span>[</span>
+              <ChemicalFormula formula={`M^${compound.n}+`} className="text-foreground" />
+              <span>]</span>
+            </span>
           </div>
           <Slider min={-5} max={0} step={0.5} value={[logConc]}
             onValueChange={([v]: number[]) => setLogConc(v)} />
@@ -82,7 +87,7 @@ export function PrecipitationPanel({ locale }: Props) {
         </div>
 
         <p className="text-[10px] text-muted-foreground font-mono">
-          Ksp = {compound.Ksp.toExponential(2)}  ·  {compound.formula}
+          Ksp = {compound.Ksp.toExponential(2)}  ·  <ChemicalFormula formula={compound.formula} className="inline-flex text-foreground" />
         </p>
       </div>
     </div>
