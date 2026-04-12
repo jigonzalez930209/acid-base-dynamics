@@ -16,6 +16,7 @@ import { ExperimentalPresets } from "@/features/advanced/experimental-presets"
 import { RedoxPanel } from "@/features/advanced/redox-panel"
 import { PrecipitationPanel } from "@/features/advanced/precipitation-panel"
 import { ComplexationPanel } from "@/features/advanced/complexation-panel"
+import { ComplexationExplorer } from "@/features/advanced/complexation-explorer"
 import type { ActiveSlot, Locale } from "@/features/chemistry/types/models"
 
 type Props = {
@@ -28,7 +29,7 @@ type Props = {
 const ALL_IDS = [
   "presets", "species", "predominance", "temperature",
   "buffer", "multiscenario", "sensitivity", "resolver",
-  "redox", "precipitation", "complexation", "export",
+  "redox", "precipitation", "complexation", "complexExplorer", "export",
 ]
 
 export function AdvancedPanel({ activeSlots, globalPH, locale, onApplyPreset }: Props) {
@@ -143,6 +144,11 @@ export function AdvancedPanel({ activeSlots, globalPH, locale, onApplyPreset }: 
         {/* Phase 5 — Complexation */}
         <AccordionSection {...S("complexation", t("advanced.complexation.title"), "Fase 5")}>
           <ComplexationPanel locale={locale} />
+        </AccordionSection>
+
+        {/* Phase 5 — Complexation Explorer */}
+        <AccordionSection {...S("complexExplorer", t("advanced.complexExplorer.title"), "Fase 5")}>
+          <ComplexationExplorer locale={locale} />
         </AccordionSection>
 
         {/* Phase 5 — Export */}
