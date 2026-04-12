@@ -1,4 +1,4 @@
-import { useMemo, useState, useTransition, useEffect, useRef } from "react"
+import { useMemo, useState, useDeferredValue, useEffect, useRef } from "react"
 
 import { Beaker } from "lucide-react"
 import { useTranslation } from "react-i18next"
@@ -18,15 +18,19 @@ type TitrationChartProps = {
 export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }: TitrationChartProps) {
   const { t } = useTranslation()
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
-  const [isPending, startTransition] = useTransition()
 
-  // Local concentration state — updates immediately so sliders feel instant.
-  // The actual chart re-computation is deferred via startTransition.
+  // ── Local concentration state ──────────────────────────────────────────────
+  // Sliders write here instantly (0 cascade – parent never re-renders during drag).
   const [localConc, setLocalConc] = useState(() =>
     activeSlots.map((s) => ({ CA: s.concentrationCA, CB: s.concentrationCB }))
   )
 
-  // Sync display state when the acid selection changes (different slot identity)
+  // useDeferredValue: React schedules chart re-renders to catch up with
+  // intermediate slider values, rendering every step at 60fps when idle.
+  const deferredConc = useDeferredValue(localConc)
+  const isStale = localConc !== deferredConc
+
+  // Re-sync when the acid selection itself changes (not just concentration)
   const slotIdsKey = activeSlots.map((s) => s.acid.id).join(",")
   const prevKeyRef = useRef(slotIdsKey)
   useEffect(() => {
@@ -36,8 +40,8 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
     }
   }, [slotIdsKey, activeSlots])
 
+  // During drag: update only local state (instant, no parent re-render)
   const handleConc = (slotIndex: number, isBase: boolean, value: number) => {
-    // Instant slider feedback
     setLocalConc((prev) => {
       const next = [...prev]
       next[slotIndex] = isBase
@@ -45,34 +49,41 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
         : { ...next[slotIndex], CA: value }
       return next
     })
-    // Defer expensive useMemo recalculation to keep slider at 60fps
-    startTransition(() => {
-      onConcentrationChange(slotIndex, isBase, value)
-    })
   }
 
+  // On release: sync parent so export / other panels see the final value
+  const handleConcCommit = (slotIndex: number, isBase: boolean, value: number) => {
+    onConcentrationChange(slotIndex, isBase, value)
+  }
+
+  // Chart reads deferredConc → React fills in every intermediate concentration
+  // value between ticks, giving a smooth animated curve at native 60fps.
   const chartData = useMemo(
     () =>
-      activeSlots.map((slot, slotIndex) => ({
-        ...slot,
-        slotIndex,
-        series: buildTitrationSeries(slot.pKas, slot.concentrationCA, slot.concentrationCB),
-      })),
-    [activeSlots]
+      activeSlots.map((slot, slotIndex) => {
+        const conc = deferredConc[slotIndex] ?? { CA: slot.concentrationCA, CB: slot.concentrationCB }
+        return {
+          ...slot,
+          slotIndex,
+          series: buildTitrationSeries(slot.pKas, conc.CA, conc.CB),
+        }
+      }),
+    [activeSlots, deferredConc]
   )
 
   const equivalencePoints = useMemo(() => {
     const points: Array<{ slotIndex: number; pKa: number; volume: number; color: string; name: string }> = []
     chartData.forEach((slot) => {
+      const conc = deferredConc[slot.slotIndex] ?? { CA: slot.concentrationCA, CB: slot.concentrationCB }
       slot.pKas.forEach((pKa) => {
-        const volume = calcTitrationVolume(pKa, slot.pKas, slot.concentrationCA, 100, slot.concentrationCB)
+        const volume = calcTitrationVolume(pKa, slot.pKas, conc.CA, 100, conc.CB)
         if (volume >= 0 && volume <= 350) {
           points.push({ slotIndex: slot.slotIndex, pKa, volume, color: slot.color, name: slot.acid.names["en"] })
         }
       })
     })
     return points
-  }, [chartData])
+  }, [chartData, deferredConc])
 
   return (
     <Card className="rounded-2xl border bg-card shadow-sm">
@@ -107,6 +118,7 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
                     <Slider
                       value={[localConc[slotIndex]?.CA ?? slot.concentrationCA]}
                       onValueChange={(v) => handleConc(slotIndex, false, v[0])}
+                      onValueCommit={(v) => handleConcCommit(slotIndex, false, v[0])}
                       min={0.01}
                       max={2}
                       step={0.01}
@@ -121,6 +133,7 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
                     <Slider
                       value={[localConc[slotIndex]?.CB ?? slot.concentrationCB]}
                       onValueChange={(v) => handleConc(slotIndex, true, v[0])}
+                      onValueCommit={(v) => handleConcCommit(slotIndex, true, v[0])}
                       min={0.01}
                       max={2}
                       step={0.01}
@@ -132,8 +145,8 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
           </div>
         )}
 
-        {/* Chart – dims slightly while the deferred computation is in flight */}
-        <div style={{ opacity: isPending ? 0.55 : 1, transition: "opacity 80ms" }}>
+        {/* Chart – faint while React is catching up with deferred concentration */}
+        <div style={{ opacity: isStale ? 0.7 : 1, transition: "opacity 60ms" }}>
         <SvgChart
           xLabel={t("charts.xVolume")}
           yLabel={t("charts.yPh")}
