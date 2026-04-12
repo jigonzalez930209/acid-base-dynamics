@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="60" x2="1080" y2="570" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0b1020" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(970 150) rotate(90) scale(220 220)">
+      <stop offset="0" stop-color="#22d3ee" stop-opacity="0.26" />
+      <stop offset="1" stop-color="#22d3ee" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(140 510) rotate(90) scale(260 260)">
+      <stop offset="0" stop-color="#818cf8" stop-opacity="0.22" />
+      <stop offset="1" stop-color="#818cf8" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#7dd3fc" />
+      <stop offset="1" stop-color="#22d3ee" />
+    </linearGradient>
+    <linearGradient id="liquid" x1="0" y1="0" x2="1" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0" stop-color="#2dd4bf" />
+      <stop offset="1" stop-color="#818cf8" />
+    </linearGradient>
+    <filter id="soft" x="0" y="0" width="1200" height="630" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="14" />
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)" />
+  <rect width="1200" height="630" fill="url(#glowA)" filter="url(#soft)" />
+  <rect width="1200" height="630" fill="url(#glowB)" filter="url(#soft)" />
+
+  <g transform="translate(84 96)">
+    <rect x="0" y="0" width="240" height="240" rx="44" fill="#0f172a" stroke="#223048" stroke-width="2" />
+    <path d="M112 38v36L77 145.5A20 20 0 0 0 94.3 176h51.4a20 20 0 0 0 17.3-30.5L128 74V38" stroke="url(#glass)" stroke-width="11" stroke-linecap="round" stroke-linejoin="round" />
+    <path d="M89 139h62l10.2 18.4a10 10 0 0 1-8.7 14.9H87.5a10 10 0 0 1-8.7-14.9L89 139Z" fill="url(#liquid)" opacity="0.96" />
+    <path d="M89 122c15 4.2 28.4 3.8 41.2.8 13.8-3.3 27.1-3.3 43.8.2" stroke="#c4b5fd" stroke-opacity="0.7" stroke-width="6" stroke-linecap="round" />
+    <circle cx="86" cy="102" r="7" fill="#fb923c" />
+    <circle cx="153" cy="96" r="7" fill="#60a5fa" />
+    <circle cx="118" cy="74" r="5" fill="#e2e8f0" />
+  </g>
+
+  <g fill="#e5eefc" font-family="Inter, ui-sans-serif, system-ui, sans-serif">
+    <text x="390" y="190" font-size="78" font-weight="700" letter-spacing="-1.8">Acid Base Dynamics</text>
+    <text x="390" y="258" font-size="30" font-weight="500" fill="#cbd5e1">Speciation, titration and acid-base equilibrium</text>
+    <text x="390" y="312" font-size="24" fill="#94a3b8">Interactive curves, pKa tables and alpha fractions in one scientific workspace.</text>
+  </g>
+
+  <g>
+    <rect x="390" y="374" width="166" height="44" rx="22" fill="#132238" stroke="#29425f" />
+    <text x="473" y="402" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#7dd3fc">Interactive</text>
+
+    <rect x="568" y="374" width="138" height="44" rx="22" fill="#172036" stroke="#29425f" />
+    <text x="637" y="402" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#c4b5fd">Bilingual</text>
+
+    <rect x="718" y="374" width="148" height="44" rx="22" fill="#132238" stroke="#29425f" />
+    <text x="792" y="402" text-anchor="middle" font-family="Inter, ui-sans-serif, system-ui, sans-serif" font-size="18" fill="#fdba74">Scientific</text>
+  </g>
+
+  <path d="M390 500C470 460 520 470 576 510C634 551 698 556 754 506C812 455 876 452 930 490" stroke="#22d3ee" stroke-width="4" stroke-linecap="round" opacity="0.55" />
+  <path d="M390 540C446 514 504 500 568 530C627 558 700 566 762 530C824 494 876 484 948 512" stroke="#fb923c" stroke-width="4" stroke-linecap="round" opacity="0.55" />
+</svg>

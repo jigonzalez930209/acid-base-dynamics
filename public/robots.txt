@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jigonzalez930209.github.io/acid-base-dynamics/sitemap.xml
