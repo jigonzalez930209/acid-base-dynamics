@@ -18,7 +18,7 @@ export default function MinimalistLayout() {
   const {
     locale, globalPH, setGlobalPH,
     resolvedSlots, activeSlots, equilibriumCount,
-    acidDatabase, acidCount, handleAcidChange, handlePkaChange,
+    acidDatabase, acidCount, handleAcidChange, handlePkaChange, handleConcentrationChange,
   } = useAcidBaseState()
 
   return (
@@ -72,7 +72,7 @@ export default function MinimalistLayout() {
 
         <Separator className="mb-10 opacity-30" />
 
-        <ChartsSection activeSlots={activeSlots} globalPH={globalPH} locale={locale} />
+        <ChartsSection activeSlots={activeSlots} globalPH={globalPH} locale={locale} onConcentrationChange={handleConcentrationChange} />
 
         <Separator className="mb-10 opacity-30" />
 
