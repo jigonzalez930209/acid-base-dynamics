@@ -60,14 +60,27 @@ export function ModelTab({ activeSlots, globalPH, locale }: ModelTabProps) {
                   <span className="text-xs text-foreground">{slot.acid.names[locale]}</span>
                   <span className="text-[10px] text-muted-foreground font-mono">pH {globalPH.toFixed(2)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-1">
-                  {fractions.map((f, i) => (
-                    <div key={`${slot.acid.id}-${i}`} className="flex justify-between py-0.5 text-[11px]">
-                      <span className="text-muted-foreground">α{i}</span>
-                      <span className="font-mono text-foreground">{f.toFixed(3)}</span>
-                    </div>
-                  ))}
-                </div>
+                <table className="w-full text-[11px]">
+                  <tbody>
+                    {Array.from({ length: Math.ceil(fractions.length / 2) }, (_, row) => {
+                      const l = row * 2, r = row * 2 + 1
+                      return (
+                        <tr key={row}>
+                          <td className="py-0.5 pr-2 text-muted-foreground">α{l}</td>
+                          <td className="py-0.5 pr-5 font-mono text-foreground">{fractions[l].toFixed(3)}</td>
+                          {r < fractions.length ? (
+                            <>
+                              <td className="py-0.5 pr-2 text-muted-foreground">α{r}</td>
+                              <td className="py-0.5 font-mono text-foreground">{fractions[r].toFixed(3)}</td>
+                            </>
+                          ) : (
+                            <><td /><td /></>
+                          )}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
               </div>
             )
           })
