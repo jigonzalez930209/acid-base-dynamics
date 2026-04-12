@@ -23,7 +23,7 @@ export function EquilibriumPanel({ activeSlots, locale }: EquilibriumPanelProps)
         <CardDescription>{t("equilibria.description")}</CardDescription>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[500px] pr-3">
+        <ScrollArea className="h-125 pr-3">
           <div className="space-y-8">
             {activeSlots.length > 0 ? (
               activeSlots.map((slot) => {
