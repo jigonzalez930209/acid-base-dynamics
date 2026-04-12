@@ -1,3 +1,4 @@
+import { useRef, useCallback } from "react"
 import { useTranslation } from "react-i18next"
 
 import { ChemicalFormula } from "@/components/shared/chemical-formula"
@@ -17,10 +18,19 @@ type AcidSlotsSectionProps = {
   locale: Locale
   onAcidChange: (slotIndex: number, acidId: string) => void
   onPKaChange: (slotIndex: number, pKaIndex: number, value: number) => void
+  onPKaChangeLive: (slotIndex: number, pKaIndex: number, value: number) => void
 }
 
-export function AcidSlotsSection({ resolvedSlots, acidDatabase, locale, onAcidChange, onPKaChange }: AcidSlotsSectionProps) {
+export function AcidSlotsSection({ resolvedSlots, acidDatabase, locale, onAcidChange, onPKaChange, onPKaChangeLive }: AcidSlotsSectionProps) {
   const { t } = useTranslation()
+  // label refs: [slotIndex][pKaIndex]
+  const labelRefs = useRef<(HTMLSpanElement | null)[][]>([])
+
+  const handleLive = useCallback((slotIndex: number, pKaIndex: number, value: number) => {
+    const el = labelRefs.current[slotIndex]?.[pKaIndex]
+    if (el) el.textContent = value.toFixed(2)
+    onPKaChangeLive(slotIndex, pKaIndex, value)
+  }, [onPKaChangeLive])
 
   return (
     <section className="mb-12">
@@ -45,16 +55,26 @@ export function AcidSlotsSection({ resolvedSlots, acidDatabase, locale, onAcidCh
               </SelectContent>
             </Select>
             {slot.acid.id !== "none" && (
-              <div className="mt-3 space-y-3">
+              // key={slot.acidId} remounts sliders (new defaultValue) when acid changes
+              <div key={slot.acidId} className="mt-3 space-y-3">
                 <ChemicalFormula formula={slot.acid.formula} className="text-xs text-muted-foreground" />
                 {slot.pKas.map((pKa, pIdx) => (
                   <div key={`${idx}-${pIdx}`} className="space-y-1">
                     <div className="flex justify-between text-[11px] text-muted-foreground">
                       <span>{t("controls.pka", { index: pIdx + 1 })}</span>
-                      <span className="font-mono">{pKa.toFixed(2)}</span>
+                      <span
+                        ref={(el) => { (labelRefs.current[idx] ??= [])[pIdx] = el }}
+                        className="font-mono"
+                      >
+                        {pKa.toFixed(2)}
+                      </span>
                     </div>
-                    <Slider value={[pKa]} min={-1} max={14} step={0.01}
-                      onValueChange={(v) => onPKaChange(idx, pIdx, v[0] ?? pKa)} />
+                    <Slider
+                      defaultValue={[pKa]}
+                      min={-1} max={14} step={0.01}
+                      onValueChange={(v) => handleLive(idx, pIdx, v[0] ?? pKa)}
+                      onValueCommit={(v) => onPKaChange(idx, pIdx, v[0] ?? pKa)}
+                    />
                   </div>
                 ))}
               </div>

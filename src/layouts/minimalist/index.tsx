@@ -1,3 +1,4 @@
+import { useRef } from "react"
 import { useTranslation } from "react-i18next"
 
 import { Separator } from "@/components/ui/separator"
@@ -10,6 +11,7 @@ import { CornerDecoration } from "./corner-decoration"
 import { PHSection } from "./ph-section"
 import { AcidSlotsSection } from "./acid-slots-section"
 import { ChartsSection } from "./charts-section"
+import type { ChartsSectionHandle } from "./charts-section"
 import { TabsSection } from "./tabs-section"
 import { AdvancedPanel } from "@/features/advanced/advanced-panel"
 
@@ -20,6 +22,8 @@ export default function MinimalistLayout() {
     resolvedSlots, activeSlots, equilibriumCount,
     acidDatabase, acidCount, handleAcidChange, handlePkaChange, handleConcentrationChange,
   } = useAcidBaseState()
+
+  const chartsSectionRef = useRef<ChartsSectionHandle>(null)
 
   return (
     <div className="relative min-h-svh overflow-x-hidden">
@@ -68,11 +72,12 @@ export default function MinimalistLayout() {
           locale={locale}
           onAcidChange={handleAcidChange}
           onPKaChange={handlePkaChange}
+          onPKaChangeLive={(si, pi, v) => chartsSectionRef.current?.schedulePKaRaf(si, pi, v)}
         />
 
         <Separator className="mb-10 opacity-30" />
 
-        <ChartsSection activeSlots={activeSlots} globalPH={globalPH} locale={locale} onConcentrationChange={handleConcentrationChange} />
+        <ChartsSection ref={chartsSectionRef} activeSlots={activeSlots} globalPH={globalPH} locale={locale} onConcentrationChange={handleConcentrationChange} />
 
         <Separator className="mb-10 opacity-30" />
 
