@@ -34,6 +34,7 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
   )
   const pathRefs = useRef<(SVGPathElement | null)[]>([])
   const pathDRef = useRef<string[]>([])
+  const circleRefs = useRef<(SVGCircleElement | null)[]>([])
   const caLabelRefs = useRef<(HTMLSpanElement | null)[]>([])
   const cbLabelRefs = useRef<(HTMLSpanElement | null)[]>([])
   const rafRef = useRef<number | null>(null)
@@ -62,13 +63,31 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
+      // Track which circle index we're writing to (circles are flat across all slots)
+      let circleIdx = 0
       activeSlots.forEach((slot, i) => {
         const el = pathRefs.current[i]
-        if (!el) return
         const { CA, CB } = concRef.current[i] ?? { CA: slot.concentrationCA, CB: slot.concentrationCB }
-        const d = buildLinePath(buildTitrationSeries(slot.pKas, CA, CB), rafMapX, rafMapY)
-        pathDRef.current[i] = d
-        el.setAttribute("d", d)
+        // Update curve path
+        if (el) {
+          const d = buildLinePath(buildTitrationSeries(slot.pKas, CA, CB), rafMapX, rafMapY)
+          pathDRef.current[i] = d
+          el.setAttribute("d", d)
+        }
+        // Update equivalence point circles for this slot (same frame)
+        slot.pKas.forEach((pKa) => {
+          const vol = calcTitrationVolume(pKa, slot.pKas, CA, 100, CB)
+          const circleEl = circleRefs.current[circleIdx]
+          if (circleEl) {
+            if (vol >= 0 && vol <= 350) {
+              circleEl.setAttribute("cx", String(rafMapX(vol)))
+              circleEl.setAttribute("visibility", "visible")
+            } else {
+              circleEl.setAttribute("visibility", "hidden")
+            }
+          }
+          circleIdx++
+        })
       })
     })
   }, [activeSlots])
@@ -195,6 +214,7 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
               {equivalencePoints.map((pt, i) => (
                 <circle
                   key={`eq-${i}`}
+                  ref={(el) => { circleRefs.current[i] = el }}
                   cx={mapX(pt.volume)}
                   cy={mapY(pt.pKa)}
                   r={hoveredIdx === i ? 6 : 4}
