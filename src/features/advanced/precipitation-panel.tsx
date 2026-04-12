@@ -23,11 +23,13 @@ export function PrecipitationPanel({ locale }: Props) {
   const { t } = useTranslation()
   const [compId,  setCompId]  = useState("fe-oh3")
   const [logConc, setLogConc] = useState(-2)   // log(0.01) = -2
+  const [currentPH, setCurrentPH] = useState(7)
 
   const compound  = HYDROXIDE_DATA.find((h) => h.id === compId) ?? HYDROXIDE_DATA[0]
   const metalConc = 10 ** logConc
   const { pHStart, pHComplete } = calcPrecipitationPH(compound.Ksp, compound.n, metalConc)
   const zone = pHComplete - pHStart
+  const precipState = currentPH < pHStart ? "no" : currentPH <= pHComplete ? "partial" : "complete"
 
   return (
     <div className="space-y-5">
@@ -48,18 +50,32 @@ export function PrecipitationPanel({ locale }: Props) {
         </div>
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{t("advanced.precipitation.concentration")}</span>
-            <span className="inline-flex items-center gap-1 font-mono text-foreground">
-              <span>[</span>
-              <ChemicalFormula formula={`M^${compound.n}+`} className="text-foreground" />
-              <span>]</span>
-            </span>
+            <span>{t("advanced.precipitation.pHWork")}</span>
+            <span className="font-mono text-foreground">pH {currentPH.toFixed(2)}</span>
           </div>
-          <Slider min={-5} max={0} step={0.5} value={[logConc]}
-            onValueChange={([v]: number[]) => setLogConc(v)} />
+          <Slider min={0} max={14} step={0.1} value={[currentPH]}
+            onValueChange={([v]: number[]) => setCurrentPH(v)} />
           <div className="flex justify-between text-[10px] text-muted-foreground">
-            <span>10⁻⁵ M</span><span>1 M</span>
+            <span>0</span><span>7</span><span>14</span>
           </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>{t("advanced.precipitation.concentration")}</span>
+          <span className="inline-flex items-center gap-1 font-mono text-foreground">
+            <span>[</span>
+            <ChemicalFormula formula={`M^${compound.n}+`} className="text-foreground" />
+            <span>]</span>
+            <span className="text-muted-foreground/80">=</span>
+            <span>{metalConc.toExponential(2)} mol/L</span>
+          </span>
+        </div>
+        <Slider min={-5} max={0} step={0.5} value={[logConc]}
+          onValueChange={([v]: number[]) => setLogConc(v)} />
+        <div className="flex justify-between text-[10px] text-muted-foreground">
+          <span>10⁻⁵ M</span><span>1 M</span>
         </div>
       </div>
 
@@ -80,11 +96,22 @@ export function PrecipitationPanel({ locale }: Props) {
           <div className="relative h-3.5 overflow-hidden rounded-sm bg-muted">
             <div className="absolute h-full rounded-sm bg-amber-500/70"
               style={{ left: `${(pHStart / 14) * 100}%`, width: `${Math.max((zone / 14) * 100, 0.8)}%` }} />
+            <div
+              className={`absolute top-0 h-full w-[2px] ${precipState === "no" ? "bg-sky-500" : precipState === "partial" ? "bg-amber-300" : "bg-emerald-500"}`}
+              style={{ left: `${(currentPH / 14) * 100}%` }}
+            />
           </div>
           <div className="flex justify-between text-[9px] text-muted-foreground">
             <span>0</span><span>7</span><span>14</span>
           </div>
         </div>
+
+        <p className="text-[10px] text-muted-foreground">
+          pH actual: <span className="font-mono text-foreground">{currentPH.toFixed(2)}</span> ·
+          {precipState === "no" && <span className="ml-1 text-sky-500">No precipita todavía</span>}
+          {precipState === "partial" && <span className="ml-1 text-amber-500">Zona de precipitación activa</span>}
+          {precipState === "complete" && <span className="ml-1 text-emerald-500">Precipitación completa</span>}
+        </p>
 
         <p className="text-[10px] text-muted-foreground font-mono">
           Ksp = {compound.Ksp.toExponential(2)}  ·  <ChemicalFormula formula={compound.formula} className="inline-flex text-foreground" />
