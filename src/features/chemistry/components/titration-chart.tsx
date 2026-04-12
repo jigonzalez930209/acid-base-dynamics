@@ -5,16 +5,14 @@ import { useTranslation } from "react-i18next"
 
 import { SvgChart, buildLinePath } from "@/components/app/svg-chart"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Slider } from "@/components/ui/slider"
 import { buildTitrationSeries, calcTitrationVolume } from "@/features/chemistry/lib/acid-math"
+import { TitrationChartControls } from "@/features/chemistry/components/titration-chart-controls"
+import { TitrationEquivalenceTable } from "@/features/chemistry/components/titration-equivalence-table"
 import type { ActiveSlot } from "@/features/chemistry/types/models"
 
-// ── Static coordinate mappers ─────────────────────────────────────────────────
-// Mirror SvgChart's internal geometry (width=920, height=360, padding l=56 t=24 r=24 b=48).
-// Module-level so RAF closures never re-capture them.
 const PAD_L = 56, PAD_T = 24
-const MAP_IW = 920 - PAD_L - 24  // 840
-const MAP_IH = 360 - PAD_T - 48  // 288
+const MAP_IW = 920 - PAD_L - 24
+const MAP_IH = 360 - PAD_T - 48
 const rafMapX = (v: number) => PAD_L + (v / 350) * MAP_IW
 const rafMapY = (v: number) => PAD_T + MAP_IH - (v / 14) * MAP_IH
 
@@ -28,7 +26,6 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
   const { t } = useTranslation()
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
 
-  // ── Refs: never trigger React re-renders ─────────────────────────────────
   const concRef = useRef(
     activeSlots.map((s) => ({ CA: s.concentrationCA, CB: s.concentrationCB }))
   )
@@ -41,13 +38,10 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
 
   const slotIdsKey = activeSlots.map((s) => s.acid.id).join(",")
 
-  // Reset concentration refs when the acid selection itself changes
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     concRef.current = activeSlots.map((s) => ({ CA: s.concentrationCA, CB: s.concentrationCB }))
-  }, [slotIdsKey])
+  }, [activeSlots])
 
-  // Initial path strings for React's first render – acid-change only
   const initialPaths = useMemo(() => {
     return activeSlots.map((slot, i) => {
       const c = concRef.current[i] ?? { CA: slot.concentrationCA, CB: slot.concentrationCB }
@@ -58,23 +52,19 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotIdsKey])
 
-  // ── Imperative RAF paint ──────────────────────────────────────────────────
   const scheduleRaf = useCallback(() => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(() => {
       rafRef.current = null
-      // Track which circle index we're writing to (circles are flat across all slots)
       let circleIdx = 0
       activeSlots.forEach((slot, i) => {
         const el = pathRefs.current[i]
         const { CA, CB } = concRef.current[i] ?? { CA: slot.concentrationCA, CB: slot.concentrationCB }
-        // Update curve path
         if (el) {
           const d = buildLinePath(buildTitrationSeries(slot.pKas, CA, CB), rafMapX, rafMapY)
           pathDRef.current[i] = d
           el.setAttribute("d", d)
         }
-        // Update equivalence point circles for this slot (same frame)
         slot.pKas.forEach((pKa) => {
           const vol = calcTitrationVolume(pKa, slot.pKas, CA, 100, CB)
           const circleEl = circleRefs.current[circleIdx]
@@ -92,7 +82,6 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
     })
   }, [activeSlots])
 
-  // Drag: mutate ref + update label text + schedule RAF. Zero state changes.
   const handleConc = useCallback((slotIndex: number, isBase: boolean, value: number) => {
     const cur = concRef.current[slotIndex]
     if (!cur) return
@@ -102,12 +91,10 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
     scheduleRaf()
   }, [scheduleRaf])
 
-  // Release: notify parent (single re-render at end of drag)
   const handleConcCommit = useCallback((slotIndex: number, isBase: boolean, value: number) => {
     onConcentrationChange(slotIndex, isBase, value)
   }, [onConcentrationChange])
 
-  // Equivalence points update only when acids change (on parent re-render after commit)
   const equivalencePoints = useMemo(() => {
     const pts: Array<{ slotIndex: number; pKa: number; volume: number; color: string; name: string }> = []
     activeSlots.forEach((slot, i) => {
@@ -133,59 +120,15 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
         <CardDescription>{t("charts.titrationDescription")}</CardDescription>
       </CardHeader>
       <CardContent className="px-3 pb-3 md:px-4 md:pb-4 text-foreground">
+        <TitrationChartControls
+          activeSlots={activeSlots}
+          slotIdsKey={slotIdsKey}
+          caLabelRefs={caLabelRefs}
+          cbLabelRefs={cbLabelRefs}
+          onConcentrationChange={handleConc}
+          onConcentrationCommit={handleConcCommit}
+        />
 
-        {/* Sliders – uncontrolled (defaultValue). key={slotIdsKey} remounts on acid change. */}
-        {activeSlots.length > 0 && (
-          <div key={slotIdsKey} className="mb-5 space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("charts.concentrations")}
-            </p>
-            {activeSlots.map((slot, slotIndex) => (
-              <div key={slot.acid.id} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full" style={{ backgroundColor: slot.color }} />
-                  <span className="text-sm font-medium">{slot.acid.names["en"]}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{t("charts.analyte")}</span>
-                      <span ref={(el) => { caLabelRefs.current[slotIndex] = el }}
-                        className="font-mono text-xs tabular-nums">
-                        {slot.concentrationCA.toFixed(2)} M
-                      </span>
-                    </div>
-                    <Slider
-                      defaultValue={[slot.concentrationCA]}
-                      onValueChange={(v) => handleConc(slotIndex, false, v[0])}
-                      onValueCommit={(v) => handleConcCommit(slotIndex, false, v[0])}
-                      min={0.01} max={2} step={0.01}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{t("charts.titrant")}</span>
-                      <span ref={(el) => { cbLabelRefs.current[slotIndex] = el }}
-                        className="font-mono text-xs tabular-nums">
-                        {slot.concentrationCB.toFixed(2)} M
-                      </span>
-                    </div>
-                    <Slider
-                      defaultValue={[slot.concentrationCB]}
-                      onValueChange={(v) => handleConc(slotIndex, true, v[0])}
-                      onValueCommit={(v) => handleConcCommit(slotIndex, true, v[0])}
-                      min={0.01} max={2} step={0.01}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Chart – paths rendered once by React with initialPaths[i], then updated
-            imperatively via RAF. pathDRef.current[i] stays current so any React
-            re-render (hover, etc.) writes the right value back. */}
         <SvgChart
           xLabel={t("charts.xVolume")}
           yLabel={t("charts.yPh")}
@@ -228,45 +171,11 @@ export function TitrationChart({ activeSlots, globalPH, onConcentrationChange }:
             </>
           )}
         </SvgChart>
-
-        {equivalencePoints.length > 0 && (
-          <div className="mt-5">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {t("charts.equivalencePoints")}
-            </p>
-            <div className="overflow-x-auto rounded-lg border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b bg-muted/40">
-                    <th className="px-3 py-2 text-left font-medium text-muted-foreground">{t("charts.eqAcid")}</th>
-                    <th className="px-3 py-2 text-center font-medium text-muted-foreground">{t("charts.eqPka")}</th>
-                    <th className="px-3 py-2 text-center font-medium text-muted-foreground">{t("charts.eqVolume")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {equivalencePoints.map((pt, i) => (
-                    <tr
-                      key={`row-${i}`}
-                      className="border-b last:border-0 transition-colors"
-                      style={{ backgroundColor: hoveredIdx === i ? `${pt.color}18` : undefined }}
-                      onMouseEnter={() => setHoveredIdx(i)}
-                      onMouseLeave={() => setHoveredIdx(null)}
-                    >
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-2">
-                          <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: pt.color }} />
-                          {pt.name}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 text-center font-mono tabular-nums">{pt.pKa.toFixed(2)}</td>
-                      <td className="px-3 py-2 text-center font-mono tabular-nums">{pt.volume.toFixed(1)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        <TitrationEquivalenceTable
+          equivalencePoints={equivalencePoints}
+          hoveredIdx={hoveredIdx}
+          onHoverChange={setHoveredIdx}
+        />
       </CardContent>
     </Card>
   )
