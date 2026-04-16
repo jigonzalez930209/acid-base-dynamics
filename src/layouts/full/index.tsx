@@ -16,7 +16,7 @@ import type { Locale } from "@/features/chemistry/types/models"
 
 const PHASE_VIEWS = [Phase1View, Phase2View, Phase3View, Phase4View, Phase5View, Phase6View, Phase7View]
 
-export function FullLayout() {
+export default function FullLayout() {
   const { i18n } = useTranslation()
   const locale = (i18n.language === "es" ? "es" : "en") as Locale
   const [activePhase, setActivePhase] = useState(1)
