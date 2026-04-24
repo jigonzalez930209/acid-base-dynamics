@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
-const API_URL = "https://script.google.com/macros/s/AKfycbwubm8yUjikKMSIQV0J8T4wgSLz2akH0SAhsvadlhDJCzuXCrYoM2h_Q20oBwlq1F1FjA/exechttps://script.google.com/macros/s/AKfycbyM34oJGVGqDP_SblQRaQV21SyZjoEo8OGA4cK1XKeEhSz--8cZua8IfkFUnszcUOQ5eA/exec" // Reemplaza con tu propia URL de Apps Script
+const API_URL = "https://script.google.com/macros/s/AKfycbz8l-eW7JiQv6FCep00TUyGc5f0mFGvferIfzTZNOvJ7jCoxprUbSWW_9jNLdGLtRqJBA/exec" // Reemplaza con tu propia URL de Apps Script
 
 const INDICADORES = [
   "Fenolftaleína",
