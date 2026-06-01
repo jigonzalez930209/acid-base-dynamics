@@ -1,2 +1,11 @@
+# Single-package repo: "packages" is required so pnpm 11 reads allowBuilds below.
+packages:
+  - '.'
+
+# pnpm 11+: explicit approval for dependencies that run install/build scripts.
+allowBuilds:
+  msw: true
+
+# pnpm 10.x (ignored if unsupported).
 onlyBuiltDependencies:
   - msw
