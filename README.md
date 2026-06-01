@@ -22,6 +22,7 @@ An interactive, browser-only platform for exploring acid–base equilibria, spec
 | **Bilingual** | Full Spanish / English UI via react-i18next |
 | **Light / dark theme** | System-aware default with manual toggle |
 | **50+ acid database** | Monoprotic, diprotic, and triprotic acids from peer-reviewed tables |
+| **Laboratory submission form** | Students: [`#/form`](https://jigonzalez930209.github.io/acid-base-dynamics/#/form) · Teachers: [`#/profesor`](https://jigonzalez930209.github.io/acid-base-dynamics/#/profesor) — Google Apps Script |
 
 ---
 
@@ -94,17 +95,22 @@ The repository ships with a GitHub Actions workflow (`.github/workflows/deploy.y
 ```
 src/
 ├── features/
-│   ├── chemistry/
-│   │   ├── components/   # Chart and panel components
-│   │   ├── lib/          # acid-math.ts, equilibria.ts, formulas.ts
-│   │   └── types/        # Shared TypeScript models
-│   ├── i18n/             # Translations (ES/EN)
-│   └── theme/            # Theme provider and toggle
-├── data/acids.ts          # 50+ acid database
-├── hooks/                 # useAcidBaseState
-├── layouts/               # Responsive layout variants
-└── components/            # Shared UI primitives
+│   ├── chemistry/           # acid-math, charts, equilibria
+│   ├── laboratory-form/     # /form (alumnos), /profesor (consulta docente)
+│   ├── i18n/                # Translations (ES/EN)
+│   └── theme/
+├── layouts/
+│   ├── minimalist/          # Default interactive acid–base UI (/)
+│   ├── full/                # Research / validation matrix
+│   ├── pro/                 # Modular domains (redox, complexation, …)
+│   ├── phosph/              # Phosphate TP wizard (#/phosph)
+│   └── doc/                 # Excel upload & batch validation (#/doc)
+├── data/acids.ts
+├── hooks/
+└── components/              # shadcn UI primitives
 ```
+
+Lab form payload reference: [docs/LAB-FORM.md](./docs/LAB-FORM.md).
 
 ---
 
