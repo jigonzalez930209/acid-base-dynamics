@@ -18,11 +18,13 @@ Si pegás el fragmento Redox y el archivo completo a la vez, tendrás funciones 
 - El primer envío `tecnica: redox` crea la hoja automáticamente, o
 - Ejecutá una vez en el editor: `setupRedoxSheets()` (definida al final de `google-apps-script.gs`).
 
-Cabeceras fila 1:
+Cabeceras fila 1 (sin pH; muestra independiente de Fosfato):
 
 ```
-timestamp | dni | alumno | muestra | ph | redox_n_tiosulfato | redox_n_ki3 | redox_peso_m1 | redox_acido_pct_m1 | redox_peso_m2 | redox_acido_pct_m2 | redox_vol_s2o3_1 | redox_vol_s2o3_2
+Timestamp | DNI | Alumno | Muestra Redox | N tiosulfato (mol/L) | N KI3 (mol/L) | Peso muestra 1 (g) | Acido ascorbico % 1 | Peso muestra 2 (g) | Acido ascorbico % 2 | Vol Na2S2O3 1 (mL) | Vol Na2S2O3 2 (mL) | Intentos
 ```
+
+Payload Redox: `muestra_redox` (no `muestra` ni `ph` de fosfatos).
 
 ## Validación opcional en Google Sheets
 

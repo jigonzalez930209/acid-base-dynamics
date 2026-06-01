@@ -22,9 +22,10 @@ El formulario de alumnos (`#/form`) muestra **dos secciones en la misma pantalla
 | Campo UI | Clave payload |
 |----------|---------------|
 | DNI | `dni` |
-| Muestra asignada | `muestra` |
-| pH inicial | `ph` |
+| Muestra fosfatos | `muestra` (solo envío Fosfato) |
+| pH inicial | `ph` (solo Fosfato) |
 | Tipo de técnica | `tecnica` |
+| Muestra Redox | `muestra_redox` (solo envío Redox) |
 
 ## Titulación Redox (`tecnica: redox`)
 

@@ -433,35 +433,99 @@ function asegurarColumnaIntentos_(sheet, columnNames) {
   }
 }
 
+function normalizarNombreColumna_(s) {
+  return String(s || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[áàä]/g, 'a')
+    .replace(/[éèë]/g, 'e')
+    .replace(/[íìï]/g, 'i')
+    .replace(/[óòö]/g, 'o')
+    .replace(/[úùü]/g, 'u');
+}
+
+/** Escribe cada campo en la columna correcta según la fila 1 (evita desfasajes). */
+function indiceColumnaPorNombre_(headers, nombreEsperado, claveAlternativa) {
+  const objetivo = normalizarNombreColumna_(nombreEsperado);
+  const alt = claveAlternativa ? normalizarNombreColumna_(claveAlternativa) : '';
+  for (let i = 0; i < headers.length; i++) {
+    const h = normalizarNombreColumna_(headers[i]);
+    if (h === objetivo || (alt && h === alt)) return i;
+  }
+  const alias = {
+    'muestra redox': ['muestra_redox', 'muestra'],
+    timestamp: ['fecha', 'hora'],
+    dni: ['documento'],
+  };
+  const key = normalizarNombreColumna_(nombreEsperado);
+  if (alias[key]) {
+    for (let a = 0; a < alias[key].length; a++) {
+      const buscado = normalizarNombreColumna_(alias[key][a]);
+      for (let i = 0; i < headers.length; i++) {
+        if (normalizarNombreColumna_(headers[i]) === buscado) return i;
+      }
+    }
+  }
+  return -1;
+}
+
+function construirFilaDesdeCabeceras_(headers, columnKeys, columnNames, dataObj) {
+  const fila = [];
+  for (let c = 0; c < headers.length; c++) fila.push('');
+  for (let i = 0; i < columnKeys.length; i++) {
+    let idx = indiceColumnaPorNombre_(headers, columnNames[i], columnKeys[i]);
+    if (idx < 0 && i < headers.length) idx = i;
+    if (idx >= 0) {
+      const v = dataObj[columnKeys[i]];
+      fila[idx] = v !== undefined && v !== null ? v : '';
+    }
+  }
+  return fila;
+}
+
+function asegurarCabecerasHoja_(sheet, columnNames) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(columnNames);
+    return;
+  }
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  let falta = false;
+  for (let i = 0; i < columnNames.length; i++) {
+    if (indiceColumnaPorNombre_(headers, columnNames[i], null) < 0) {
+      falta = true;
+      break;
+    }
+  }
+  if (!falta) return;
+  sheet.getRange(1, 1, 1, columnNames.length).setValues([columnNames]);
+}
+
 function upsertPorDni_(sheet, columnKeys, columnNames, dataObj, colDniIndex) {
+  asegurarCabecerasHoja_(sheet, columnNames);
   asegurarColumnaIntentos_(sheet, columnNames);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const colIntentos = indiceColumnaIntentos_(headers);
   if (colIntentos < 0) throw new Error('No se pudo crear la columna Intentos.');
 
   const dni = normalizarDni_(dataObj.dni);
-  const found = buscarFilaPorDni_(sheet, dni, colDniIndex, colIntentos);
+  const colDniReal = indiceColumnaPorNombre_(headers, columnNames[colDniIndex], 'dni');
+  const colDni = colDniReal >= 0 ? colDniReal : colDniIndex;
+  const found = buscarFilaPorDni_(sheet, dni, colDni, colIntentos);
   const nuevoIntentos = found.fila ? found.intentos + 1 : 1;
 
   dataObj.intentos = nuevoIntentos;
   dataObj.timestamp = new Date();
 
-  const rowData = columnKeys.map(function(key) {
-    const v = dataObj[key];
-    return v !== undefined && v !== null ? v : '';
-  });
-
-  const numCols = sheet.getLastColumn();
-  const filaValores = rowData.slice();
-  while (filaValores.length < numCols) filaValores.push('');
-  if (filaValores.length > numCols) filaValores.length = numCols;
+  const filaValores = construirFilaDesdeCabeceras_(headers, columnKeys, columnNames, dataObj);
+  const numCols = headers.length;
 
   if (found.fila) {
     sheet.getRange(found.fila, 1, 1, numCols).setValues([filaValores]);
     if (found.duplicadas.length > 0) eliminarFilasDuplicadas_(sheet, found.duplicadas);
   } else {
     sheet.appendRow(filaValores);
-    const dup = buscarFilaPorDni_(sheet, dni, colDniIndex, colIntentos);
+    const dup = buscarFilaPorDni_(sheet, dni, colDni, colIntentos);
     if (dup.duplicadas.length > 0) eliminarFilasDuplicadas_(sheet, dup.duplicadas);
   }
 
@@ -545,6 +609,9 @@ function guardarFosfato_(ss, data, alumnoInfo) {
 // ─── Redox ───────────────────────────────────────────────────────────────────
 
 function validarRedox_(d) {
+  const muestraRedox = String(d.muestra_redox != null ? d.muestra_redox : d.muestra || '').trim();
+  if (!muestraRedox) return 'Ingresá el número de muestra Redox.';
+
   const req = [
     'redox_n_tiosulfato', 'redox_n_ki3',
     'redox_peso_m1', 'redox_acido_pct_m1',
@@ -565,14 +632,13 @@ function validarRedox_(d) {
   if (!enRango_(d.redox_acido_pct_m2, 0, 100)) return 'Ácido ascórbico % 2 inválido (0–100).';
   if (!enRango_(d.redox_vol_s2o3_1, 0, 200)) return 'Volumen Na₂S₂O₃ 1 inválido (0–200 mL).';
   if (!enRango_(d.redox_vol_s2o3_2, 0, 200)) return 'Volumen Na₂S₂O₃ 2 inválido (0–200 mL).';
-  if (!enRango_(d.ph, 0, 14)) return 'pH inicial inválido (0–14).';
   return null;
 }
 
 function getRedoxColumnas_() {
   return {
     keys: [
-      'timestamp', 'dni', 'alumno', 'muestra', 'ph',
+      'timestamp', 'dni', 'alumno', 'muestra_redox',
       'redox_n_tiosulfato', 'redox_n_ki3',
       'redox_peso_m1', 'redox_acido_pct_m1',
       'redox_peso_m2', 'redox_acido_pct_m2',
@@ -580,11 +646,11 @@ function getRedoxColumnas_() {
       'intentos',
     ],
     names: [
-      'timestamp', 'dni', 'alumno', 'muestra', 'ph',
-      'redox_n_tiosulfato', 'redox_n_ki3',
-      'redox_peso_m1', 'redox_acido_pct_m1',
-      'redox_peso_m2', 'redox_acido_pct_m2',
-      'redox_vol_s2o3_1', 'redox_vol_s2o3_2',
+      'Timestamp', 'DNI', 'Alumno', 'Muestra Redox',
+      'N tiosulfato (mol/L)', 'N KI3 (mol/L)',
+      'Peso muestra 1 (g)', 'Acido ascorbico % 1',
+      'Peso muestra 2 (g)', 'Acido ascorbico % 2',
+      'Vol Na2S2O3 1 (mL)', 'Vol Na2S2O3 2 (mL)',
       COL_INTENTOS_LABEL,
     ],
   };
@@ -601,8 +667,7 @@ function guardarRedox_(ss, data, nombreAlumno) {
   const payload = {
     dni: data.dni,
     alumno: nombreAlumno,
-    muestra: data.muestra,
-    ph: data.ph,
+    muestra_redox: String(data.muestra_redox != null ? data.muestra_redox : data.muestra || '').trim(),
     redox_n_tiosulfato: data.redox_n_tiosulfato,
     redox_n_ki3: data.redox_n_ki3,
     redox_peso_m1: data.redox_peso_m1,
@@ -632,7 +697,7 @@ function setupRedoxSheets() {
   const redox = ss.getSheetByName(NOMBRE_HOJA_REDOX) || ss.insertSheet(NOMBRE_HOJA_REDOX);
   const cols = getRedoxColumnas_();
   redox.clear();
-  redox.appendRow(cols.names);
+  redox.getRange(1, 1, 1, cols.names.length).setValues([cols.names]);
   redox.setFrozenRows(1);
   redox.getRange('A:A').setNumberFormat('dd/mm/yyyy hh:mm');
 }
