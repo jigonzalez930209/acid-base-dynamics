@@ -15,7 +15,7 @@ export function emptyAcidBasePayload(): Record<string, string> {
 
 export function buildFosfatoPayload(
   dni: string,
-  muestra: string,
+  muestraFosfato: string,
   ph: string,
   tecnica: string,
   t1: TitrationBlock,
@@ -23,7 +23,7 @@ export function buildFosfatoPayload(
 ): Record<string, string> {
   const payload: Record<string, string> = {
     dni: dni.replace(/\D/g, ''),
-    muestra,
+    muestra: muestraFosfato,
     ph,
     tecnica,
     ...emptyAcidBasePayload(),
@@ -64,14 +64,12 @@ export function buildFosfatoPayload(
 
 export function buildRedoxPayload(
   dni: string,
-  muestra: string,
-  ph: string,
+  muestraRedox: string,
   redox: RedoxFields,
 ): Record<string, string> {
   return {
     dni: dni.replace(/\D/g, ''),
-    muestra,
-    ph,
+    muestra_redox: muestraRedox,
     tecnica: 'redox',
     ...emptyAcidBasePayload(),
     ...emptyRedoxPayload(),

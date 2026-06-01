@@ -1,143 +1,88 @@
-import type { RedoxFields } from './types'
+import { useFormContext } from 'react-hook-form'
+import { FormField, labInputClassName } from './form-field'
+import type { LaboratoryFormValues } from './schemas'
 
-type Props = {
-  data: RedoxFields
-  onChange: (next: RedoxFields) => void
-  inputClassName: string
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  inputClassName,
-  step,
-  min,
-  max,
-}: {
+type NumFieldProps = {
+  name: `redox.${keyof LaboratoryFormValues['redox']}`
   label: string
-  value: string
-  onChange: (v: string) => void
-  inputClassName: string
   step: string
   min?: number
   max?: number
-}) {
+}
+
+function NumField({ name, label, step, min, max }: NumFieldProps) {
+  const {
+    register,
+    formState: { errors, isSubmitting },
+  } = useFormContext<LaboratoryFormValues>()
+  const fieldKey = name.replace('redox.', '') as keyof LaboratoryFormValues['redox']
+  const err = errors.redox?.[fieldKey]
+
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium leading-none">{label}</label>
+    <FormField label={label} error={err}>
       <input
-        required
         type="number"
         step={step}
         min={min}
         max={max}
-        className={inputClassName}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        disabled={isSubmitting}
+        aria-invalid={!!err}
+        className={labInputClassName}
+        {...register(name)}
       />
-    </div>
+    </FormField>
   )
 }
 
-export function RedoxBlock({ data, onChange, inputClassName }: Props) {
-  const set = (patch: Partial<RedoxFields>) => onChange({ ...data, ...patch })
+export function RedoxBlock() {
+  const {
+    register,
+    formState: { errors, isSubmitting },
+  } = useFormContext<LaboratoryFormValues>()
 
   return (
     <div className="space-y-6">
+      <FormField label="Número de muestra Redox" error={errors.muestraRedox}>
+        <input
+          type="text"
+          inputMode="numeric"
+          disabled={isSubmitting}
+          aria-invalid={!!errors.muestraRedox}
+          className={labInputClassName}
+          placeholder="Ej: 2"
+          {...register('muestraRedox')}
+        />
+      </FormField>
+
       <fieldset className="border rounded-md p-4 space-y-4">
         <legend className="text-sm font-semibold px-2">Parámetros de la valoración</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            label="Normalidad de tiosulfato de sodio (mol/L)"
-            value={data.nTiosulfato}
-            onChange={(v) => set({ nTiosulfato: v })}
-            inputClassName={inputClassName}
-            step="0.0001"
-            min={0.001}
-            max={2}
-          />
-          <Field
-            label="Normalidad del KI₃ (mol/L)"
-            value={data.nKi3}
-            onChange={(v) => set({ nKi3: v })}
-            inputClassName={inputClassName}
-            step="0.0001"
-            min={0.001}
-            max={2}
-          />
+          <NumField name="redox.nTiosulfato" label="Normalidad de tiosulfato de sodio (mol/L)" step="0.0001" min={0.001} max={2} />
+          <NumField name="redox.nKi3" label="Normalidad del KI₃ (mol/L)" step="0.0001" min={0.001} max={2} />
         </div>
       </fieldset>
 
       <fieldset className="border rounded-md p-4 space-y-4">
         <legend className="text-sm font-semibold px-2">Muestra 1</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            label="Peso muestra 1 (g)"
-            value={data.pesoM1}
-            onChange={(v) => set({ pesoM1: v })}
-            inputClassName={inputClassName}
-            step="0.0001"
-            min={0.0001}
-            max={10}
-          />
-          <Field
-            label="Ácido ascórbico % 1"
-            value={data.acidoPctM1}
-            onChange={(v) => set({ acidoPctM1: v })}
-            inputClassName={inputClassName}
-            step="0.01"
-            min={0}
-            max={100}
-          />
+          <NumField name="redox.pesoM1" label="Peso muestra 1 (g)" step="0.0001" min={0.0001} max={10} />
+          <NumField name="redox.acidoPctM1" label="Ácido ascórbico % 1" step="0.01" min={0} max={100} />
         </div>
       </fieldset>
 
       <fieldset className="border rounded-md p-4 space-y-4">
         <legend className="text-sm font-semibold px-2">Muestra 2</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            label="Peso muestra 2 (g)"
-            value={data.pesoM2}
-            onChange={(v) => set({ pesoM2: v })}
-            inputClassName={inputClassName}
-            step="0.0001"
-            min={0.0001}
-            max={10}
-          />
-          <Field
-            label="Ácido ascórbico % 2"
-            value={data.acidoPctM2}
-            onChange={(v) => set({ acidoPctM2: v })}
-            inputClassName={inputClassName}
-            step="0.01"
-            min={0}
-            max={100}
-          />
+          <NumField name="redox.pesoM2" label="Peso muestra 2 (g)" step="0.0001" min={0.0001} max={10} />
+          <NumField name="redox.acidoPctM2" label="Ácido ascórbico % 2" step="0.01" min={0} max={100} />
         </div>
       </fieldset>
 
       <fieldset className="border rounded-md p-4 space-y-4">
         <legend className="text-sm font-semibold px-2">Volúmenes Na₂S₂O₃</legend>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field
-            label="Volumen Na₂S₂O₃ 1 (mL)"
-            value={data.volS2o3_1}
-            onChange={(v) => set({ volS2o3_1: v })}
-            inputClassName={inputClassName}
-            step="0.01"
-            min={0}
-            max={200}
-          />
-          <Field
-            label="Volumen Na₂S₂O₃ 2 (mL)"
-            value={data.volS2o3_2}
-            onChange={(v) => set({ volS2o3_2: v })}
-            inputClassName={inputClassName}
-            step="0.01"
-            min={0}
-            max={200}
-          />
+          <NumField name="redox.volS2o3_1" label="Volumen Na₂S₂O₃ 1 (mL)" step="0.01" min={0} max={200} />
+          <NumField name="redox.volS2o3_2" label="Vol Na₂S₂O₃ 2 (mL)" step="0.01" min={0} max={200} />
         </div>
       </fieldset>
     </div>

@@ -64,9 +64,9 @@ function validateTitrationBlock(block: TitrationBlock, title: string): string | 
   )
 }
 
-export function validateRedox(redox: RedoxFields, ph: string): string | null {
+export function validateRedox(redox: RedoxFields, muestraRedox: string): string | null {
+  if (!muestraRedox.trim()) return 'Ingresá el número de muestra Redox.'
   return (
-    validatePh(ph) ??
     validateNormality(redox.nTiosulfato, 'Normalidad de tiosulfato de sodio') ??
     validateNormality(redox.nKi3, 'Normalidad del KI₃') ??
     validateWeight(redox.pesoM1, 'Peso muestra 1') ??
@@ -78,11 +78,7 @@ export function validateRedox(redox: RedoxFields, ph: string): string | null {
   )
 }
 
-const ACID_BASE_TECHNIQUES = ['1-hcl-1-naoh', '2-hcl', '2-naoh'] as const
-
-export function isAcidBaseTechnique(tecnica: string): boolean {
-  return (ACID_BASE_TECHNIQUES as readonly string[]).includes(tecnica)
-}
+export { isAcidBaseTechnique } from './constants'
 
 export function validateFosfatoSection(params: {
   dni: string
@@ -98,7 +94,7 @@ export function validateFosfatoSection(params: {
   if (dniErr) return dniErr
   if (!muestra.trim()) return 'Ingresá la muestra asignada.'
   if (!tecnica) return 'Seleccioná la técnica de titulación de fosfatos.'
-  if (!isAcidBaseTechnique(tecnica)) return 'Técnica de fosfatos no válida.'
+  if (!['1-hcl-1-naoh', '2-hcl', '2-naoh'].includes(tecnica)) return 'Técnica de fosfatos no válida.'
 
   const phErr = validatePh(ph)
   if (phErr) return phErr
@@ -112,31 +108,24 @@ export function validateFosfatoSection(params: {
 /** Valida fosfatos + Redox en el mismo envío. */
 export function validateCombinedLaboratoryForm(params: {
   dni: string
-  muestra: string
+  muestraFosfato: string
   ph: string
   tecnica: string
   t1: TitrationBlock
   t2: TitrationBlock
+  muestraRedox: string
   redox: RedoxFields
 }): string | null {
   return (
-    validateFosfatoSection(params) ??
-    validateRedox(params.redox, params.ph)
+    validateFosfatoSection({
+      dni: params.dni,
+      muestra: params.muestraFosfato,
+      ph: params.ph,
+      tecnica: params.tecnica,
+      t1: params.t1,
+      t2: params.t2,
+    }) ?? validateRedox(params.redox, params.muestraRedox)
   )
-}
-
-/** @deprecated Usar validateCombinedLaboratoryForm o validateFosfatoSection */
-export function validateLaboratoryForm(params: {
-  dni: string
-  muestra: string
-  ph: string
-  tecnica: string
-  t1: TitrationBlock
-  t2: TitrationBlock
-  redox: RedoxFields
-}): string | null {
-  if (params.tecnica === 'redox') return validateRedox(params.redox, params.ph)
-  return validateCombinedLaboratoryForm(params)
 }
 
 /** Claves redox vacías para el payload ácido-base. */
