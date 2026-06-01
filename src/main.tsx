@@ -12,6 +12,7 @@ import { AppProviders } from '@/app/providers'
 const PhosphLayout = lazy(() => import('./layouts/phosph/index.tsx'))
 const DocLayout = lazy(() => import('./layouts/doc/index.tsx'))
 const LaboratoryForm = lazy(() => import('./features/laboratory-form/laboratory-form.tsx'))
+const TeacherConsultation = lazy(() => import('./features/laboratory-form/teacher-consultation.tsx'))
 
 const Fallback = () => (
   <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -26,6 +27,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/" element={<MinimalistLayout />} />
           <Route path="/form" element={<Suspense fallback={<Fallback />}><LaboratoryForm /></Suspense>} />
+          <Route path="/profesor" element={<Suspense fallback={<Fallback />}><TeacherConsultation /></Suspense>} />
           <Route path="/full" element={<FullLayout />} />
           <Route path="/pro" element={<ProLayout />} />
           <Route path="/phosph" element={<Suspense fallback={<Fallback />}><PhosphLayout /></Suspense>} />
