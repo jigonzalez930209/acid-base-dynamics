@@ -13,4 +13,10 @@ export default defineConfig(({ command }) => ({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    watch: {
+      // Avoid ENOSPC when inotify max_user_watches is exhausted (common with Cursor/IDEs).
+      usePolling: true,
+    },
+  },
 }))
