@@ -109,8 +109,8 @@ const redoxFieldsSchema = z.object({
   acidoPctM1: requiredDecimalString({
     required: 'Ingresá el % ácido ascórbico 1.',
     min: 0,
-    max: 100,
-    rangeMessage: '% ácido 1: entre 0 y 100.',
+    max: 200,
+    rangeMessage: '% ácido 1: entre 0 y 200 (puede superar 100).',
   }),
   pesoM2: requiredDecimalString({
     required: 'Ingresá el peso muestra 2.',
@@ -121,8 +121,8 @@ const redoxFieldsSchema = z.object({
   acidoPctM2: requiredDecimalString({
     required: 'Ingresá el % ácido ascórbico 2.',
     min: 0,
-    max: 100,
-    rangeMessage: '% ácido 2: entre 0 y 100.',
+    max: 200,
+    rangeMessage: '% ácido 2: entre 0 y 200 (puede superar 100).',
   }),
   volS2o3_1: requiredDecimalString({
     required: 'Ingresá el volumen Na₂S₂O₃ 1.',

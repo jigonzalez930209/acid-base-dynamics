@@ -330,7 +330,7 @@ export const RedoxSection = memo(function RedoxSection() {
           <legend className="text-sm font-semibold px-2">Muestra 1</legend>
           <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-4">
             <RedoxNumField name="redox.pesoM1" label="Peso muestra 1 (g)" step="0.0001" min={0.0001} max={10} />
-            <RedoxNumField name="redox.acidoPctM1" label="Ácido ascórbico % 1" step="0.01" min={0} max={100} />
+            <RedoxNumField name="redox.acidoPctM1" label="Ácido ascórbico % 1" step="0.01" min={0} max={200} />
           </div>
         </fieldset>
 
@@ -338,7 +338,7 @@ export const RedoxSection = memo(function RedoxSection() {
           <legend className="text-sm font-semibold px-2">Muestra 2</legend>
           <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-4">
             <RedoxNumField name="redox.pesoM2" label="Peso muestra 2 (g)" step="0.0001" min={0.0001} max={10} />
-            <RedoxNumField name="redox.acidoPctM2" label="Ácido ascórbico % 2" step="0.01" min={0} max={100} />
+            <RedoxNumField name="redox.acidoPctM2" label="Ácido ascórbico % 2" step="0.01" min={0} max={200} />
           </div>
         </fieldset>
 
