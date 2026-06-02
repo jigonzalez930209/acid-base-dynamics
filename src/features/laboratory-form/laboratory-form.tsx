@@ -1,21 +1,21 @@
-import { useState } from 'react'
-import { useForm, FormProvider, Controller, useFormContext } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
+import { useCallback, useState } from 'react'
+import { FormProvider, useForm } from 'react-hook-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { RedoxBlock } from './redox-block'
 import { LAB_API_URL, labFetchJson } from './api'
 import { buildFosfatoPayload, buildRedoxPayload } from './build-payload'
-import { INDICADORES, isAcidBaseTechnique, TECNICA_OPTIONS } from './constants'
-import { FormField, labInputClassName } from './form-field'
-import { LabSelect } from './lab-select'
+import {
+  FosfatoSection,
+  GeneralSection,
+  RedoxSection,
+  SubmitButton,
+  titrationDefaults,
+} from './form-sections'
 import {
   defaultLaboratoryFormValues,
-  laboratoryFormSchema,
+  laboratoryFormResolver,
   parseLaboratoryForm,
   type LaboratoryFormValues,
 } from './schemas'
-import type { TitrationBlock } from './validation'
 
 type LabApiResponse = {
   status: string
@@ -34,131 +34,19 @@ async function postLabPayload(payload: Record<string, string>): Promise<LabApiRe
   })
 }
 
-function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-base font-semibold border-b border-border/60 pb-1.5 mb-1">{children}</h2>
-}
-
-function titrationDefaults(tipo: string): TitrationBlock {
-  return { tipo, normalidad: '', indicador: '', v1: '', v2: '' }
-}
-
-type TitrationPrefix = 't1' | 't2'
-
-function TitrationFields({ prefix, title }: { prefix: TitrationPrefix; title: string }) {
-  const {
-    register,
-    watch,
-    control,
-    getFieldState,
-    formState,
-  } = useFormContext<LaboratoryFormValues>()
-  const { isSubmitting } = formState
-  const tipo = watch(`${prefix}.tipo`)
-
-  const fieldError = (name: `${TitrationPrefix}.${'normalidad' | 'indicador' | 'v1' | 'v2'}`) => {
-    const { error, isTouched } = getFieldState(name, formState)
-    return error && (isTouched || formState.isSubmitted) ? error : undefined
-  }
-
-  const normalidadError = fieldError(`${prefix}.normalidad`)
-  const indicadorError = fieldError(`${prefix}.indicador`)
-  const v1Error = fieldError(`${prefix}.v1`)
-  const v2Error = fieldError(`${prefix}.v2`)
-
-  return (
-    <fieldset className="border rounded-md p-4 space-y-3 md:space-y-4">
-      <legend className="text-sm font-semibold px-2">
-        {title} ({tipo || '—'})
-      </legend>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-start gap-x-4 gap-y-3 md:gap-5">
-        <FormField label="Normalidad (N)" error={normalidadError}>
-          <input
-            type="number"
-            step="0.0001"
-            min={0.001}
-            max={2}
-            disabled={isSubmitting}
-            aria-invalid={!!normalidadError}
-            className={labInputClassName}
-            {...register(`${prefix}.normalidad`)}
-          />
-        </FormField>
-        <FormField label="Indicador" error={indicadorError}>
-          <Controller
-            name={`${prefix}.indicador`}
-            control={control}
-            render={({ field }) => (
-              <LabSelect
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                options={INDICADORES.map(ind => ({ value: ind, label: ind }))}
-                disabled={isSubmitting}
-                aria-invalid={!!indicadorError}
-              />
-            )}
-          />
-        </FormField>
-        <FormField label="Volumen 1 (mL)" error={v1Error}>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            max={200}
-            disabled={isSubmitting}
-            aria-invalid={!!v1Error}
-            className={labInputClassName}
-            {...register(`${prefix}.v1`)}
-          />
-        </FormField>
-        <FormField label="Volumen 2 (mL)" error={v2Error}>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            max={200}
-            disabled={isSubmitting}
-            aria-invalid={!!v2Error}
-            className={labInputClassName}
-            {...register(`${prefix}.v2`)}
-          />
-        </FormField>
-      </div>
-    </fieldset>
-  )
-}
-
 export default function LaboratoryForm() {
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null)
 
   const methods = useForm<LaboratoryFormValues>({
-    resolver: zodResolver(laboratoryFormSchema),
+    resolver: laboratoryFormResolver,
     defaultValues: defaultLaboratoryFormValues,
     mode: 'onBlur',
     reValidateMode: 'onBlur',
   })
 
-  const {
-    control,
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    reset,
-    getFieldState,
-    formState,
-  } = methods
+  const { handleSubmit, setValue, reset } = methods
 
-  const { isSubmitting } = formState
-
-  const visibleError = <K extends keyof LaboratoryFormValues>(name: K) => {
-    const { error, isTouched } = getFieldState(name, formState)
-    return error && (isTouched || formState.isSubmitted) ? error : undefined
-  }
-
-  const tecnica = watch('tecnica')
-
-  const handleTecnicaChange = (val: string) => {
+  const handleTecnicaChange = useCallback((val: string) => {
     if (val === '1-hcl-1-naoh') {
       setValue('t1', titrationDefaults('HCl'))
       setValue('t2', titrationDefaults('NaOH'))
@@ -169,7 +57,7 @@ export default function LaboratoryForm() {
       setValue('t1', titrationDefaults('NaOH'))
       setValue('t2', titrationDefaults('NaOH'))
     }
-  }
+  }, [setValue])
 
   const onSubmit = async (values: LaboratoryFormValues) => {
     setFeedback({ type: 'info', message: 'Validando DNI y enviando…' })
@@ -243,91 +131,9 @@ export default function LaboratoryForm() {
         <CardContent>
           <FormProvider {...methods}>
             <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6 md:space-y-8" noValidate>
-              <section className="space-y-3">
-                <SectionHeading>Datos generales</SectionHeading>
-                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-5">
-                  <FormField label="DNI (sin puntos)" error={visibleError('dni')}>
-                    <Controller
-                      name="dni"
-                      control={control}
-                      render={({ field }) => (
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={8}
-                          autoComplete="off"
-                          disabled={isSubmitting}
-                          aria-invalid={!!visibleError('dni')}
-                          className={labInputClassName}
-                          placeholder="Ej: 12345678"
-                          value={field.value}
-                          onChange={e => field.onChange(e.target.value.replace(/\D/g, '').slice(0, 8))}
-                          onBlur={field.onBlur}
-                        />
-                      )}
-                    />
-                  </FormField>
-                </div>
-              </section>
-
-              <section className="space-y-3">
-                <SectionHeading>Titulación de fosfatos (ácido-base)</SectionHeading>
-                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-5 max-w-2xl">
-                  <FormField label="Muestra fosfatos" error={visibleError('muestraFosfato')}>
-                    <input
-                      type="text"
-                      disabled={isSubmitting}
-                      aria-invalid={!!visibleError('muestraFosfato')}
-                      className={labInputClassName}
-                      {...register('muestraFosfato')}
-                    />
-                  </FormField>
-                  <FormField label="pH inicial" error={visibleError('ph')}>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min={0}
-                      max={14}
-                      disabled={isSubmitting}
-                      aria-invalid={!!visibleError('ph')}
-                      className={labInputClassName}
-                      {...register('ph')}
-                    />
-                  </FormField>
-                </div>
-                <FormField label="Técnica asignada" error={visibleError('tecnica')} className="max-w-md">
-                  <Controller
-                    name="tecnica"
-                    control={control}
-                    render={({ field }) => (
-                      <LabSelect
-                        value={field.value}
-                        onChange={val => {
-                          field.onChange(val)
-                          handleTecnicaChange(val)
-                        }}
-                        onBlur={field.onBlur}
-                        options={TECNICA_OPTIONS}
-                        disabled={isSubmitting}
-                        aria-invalid={!!visibleError('tecnica')}
-                      />
-                    )}
-                  />
-                </FormField>
-
-                {isAcidBaseTechnique(tecnica) && (
-                  <div className="space-y-4 md:space-y-5">
-                    <TitrationFields prefix="t1" title="Primera valoración" />
-                    <TitrationFields prefix="t2" title="Segunda valoración" />
-                  </div>
-                )}
-              </section>
-
-              <section className="space-y-3">
-                <SectionHeading>Titulación Redox</SectionHeading>
-                <RedoxBlock />
-              </section>
+              <GeneralSection />
+              <FosfatoSection onTecnicaChange={handleTecnicaChange} />
+              <RedoxSection />
 
               {feedback && (
                 <div
@@ -344,13 +150,7 @@ export default function LaboratoryForm() {
                 </div>
               )}
 
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isSubmitting || !isAcidBaseTechnique(tecnica)}
-              >
-                {isSubmitting ? 'Enviando…' : 'Enviar fosfatos y Redox'}
-              </Button>
+              <SubmitButton />
             </form>
           </FormProvider>
         </CardContent>

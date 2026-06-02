@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { memo } from 'react'
 import type { FieldError } from 'react-hook-form'
 import { cn } from '@/lib/utils'
 
@@ -10,7 +11,7 @@ type Props = {
   className?: string
 }
 
-export function FormField({ label, error, hint, children, className }: Props) {
+export const FormField = memo(function FormField({ label, error, hint, children, className }: Props) {
   const feedback = error?.message ?? hint
 
   return (
@@ -34,12 +35,17 @@ export function FormField({ label, error, hint, children, className }: Props) {
       </p>
     </div>
   )
-}
+})
 
-export const labInputClassName =
-  'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive'
+export const labFieldFocusClassName =
+  'outline-none focus:border-ring focus:ring-2 focus:ring-ring/35 focus:ring-offset-0 aria-invalid:focus:border-destructive aria-invalid:focus:ring-2 aria-invalid:focus:ring-destructive/50'
+
+export const labInputClassName = cn(
+  'flex h-10 w-full rounded-sm border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive',
+  labFieldFocusClassName,
+)
 
 export const labSelectTriggerClassName = cn(
   labInputClassName,
-  'w-full justify-between pr-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+  'w-full justify-between pr-2 data-[state=open]:border-ring data-[state=open]:ring-2 data-[state=open]:ring-ring/35 aria-invalid:data-[state=open]:border-destructive aria-invalid:data-[state=open]:ring-destructive/50',
 )

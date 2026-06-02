@@ -21,3 +21,11 @@ export type AcidBaseTechnique = (typeof ACID_BASE_TECHNIQUES)[number]
 export function isAcidBaseTechnique(tecnica: string): tecnica is AcidBaseTechnique {
   return (ACID_BASE_TECHNIQUES as readonly string[]).includes(tecnica)
 }
+
+/** Etiqueta HCl/NaOH en leyenda según técnica (sin watch: se deriva del valor de `tecnica`). */
+export function titrationTipoLabel(tecnica: string, block: 't1' | 't2'): string {
+  if (tecnica === '1-hcl-1-naoh') return block === 't1' ? 'HCl' : 'NaOH'
+  if (tecnica === '2-hcl') return 'HCl'
+  if (tecnica === '2-naoh') return 'NaOH'
+  return '—'
+}

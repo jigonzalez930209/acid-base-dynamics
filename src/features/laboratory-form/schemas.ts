@@ -1,3 +1,4 @@
+import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { isAcidBaseTechnique } from './constants'
 
@@ -31,76 +32,122 @@ export type LaboratoryFormOutput = {
   redox: RedoxFields
 }
 
-const requiredString = (msg: string) => z.string().trim().min(1, msg)
+function parseDecimal(value: string): number {
+  return parseFloat(value.replace(',', '.').trim())
+}
+
+const requiredString = (message: string) => z.string().trim().min(1, message)
+
+function requiredDecimalString(options: {
+  required: string
+  min: number
+  max: number
+  rangeMessage: string
+  exclusiveMin?: boolean
+}) {
+  return requiredString(options.required).refine(value => {
+    const n = parseDecimal(value)
+    if (Number.isNaN(n)) return false
+    if (options.exclusiveMin) return n > options.min && n <= options.max
+    return n >= options.min && n <= options.max
+  }, { message: options.rangeMessage })
+}
+
+export const dniInputSchema = z
+  .string()
+  .transform(value => value.replace(/\D/g, ''))
+  .pipe(
+    z
+      .string()
+      .min(7, 'El DNI debe tener 7 u 8 dígitos.')
+      .max(8, 'El DNI debe tener 7 u 8 dígitos.'),
+  )
 
 const titrationSchema = z.object({
   tipo: z.string(),
-  normalidad: requiredString('Ingresá la normalidad.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n > 0 && n <= 2
-  }, { message: 'Normalidad: entre 0.001 y 2 mol/L.' }),
+  normalidad: requiredDecimalString({
+    required: 'Ingresá la normalidad.',
+    min: 0,
+    max: 2,
+    exclusiveMin: true,
+    rangeMessage: 'Normalidad: entre 0.001 y 2 mol/L.',
+  }),
   indicador: requiredString('Seleccioná un indicador.'),
-  v1: requiredString('Ingresá el volumen 1.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 200
-  }, { message: 'Volumen 1: entre 0 y 200 mL.' }),
-  v2: requiredString('Ingresá el volumen 2.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 200
-  }, { message: 'Volumen 2: entre 0 y 200 mL.' }),
+  v1: requiredDecimalString({
+    required: 'Ingresá el volumen 1.',
+    min: 0,
+    max: 200,
+    rangeMessage: 'Volumen 1: entre 0 y 200 mL.',
+  }),
+  v2: requiredDecimalString({
+    required: 'Ingresá el volumen 2.',
+    min: 0,
+    max: 200,
+    rangeMessage: 'Volumen 2: entre 0 y 200 mL.',
+  }),
 })
 
 const redoxFieldsSchema = z.object({
-  nTiosulfato: requiredString('Ingresá la normalidad de tiosulfato.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0.001 && n <= 2
-  }, { message: 'Tiosulfato: entre 0.001 y 2 mol/L.' }),
-  nKi3: requiredString('Ingresá la normalidad del KI₃.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0.001 && n <= 2
-  }, { message: 'KI₃: entre 0.001 y 2 mol/L.' }),
-  pesoM1: requiredString('Ingresá el peso muestra 1.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0.0001 && n <= 10
-  }, { message: 'Peso muestra 1: entre 0.0001 y 10 g.' }),
-  acidoPctM1: requiredString('Ingresá el % ácido ascórbico 1.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 100
-  }, { message: '% ácido 1: entre 0 y 100.' }),
-  pesoM2: requiredString('Ingresá el peso muestra 2.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0.0001 && n <= 10
-  }, { message: 'Peso muestra 2: entre 0.0001 y 10 g.' }),
-  acidoPctM2: requiredString('Ingresá el % ácido ascórbico 2.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 100
-  }, { message: '% ácido 2: entre 0 y 100.' }),
-  volS2o3_1: requiredString('Ingresá el volumen Na₂S₂O₃ 1.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 200
-  }, { message: 'Volumen 1: entre 0 y 200 mL.' }),
-  volS2o3_2: requiredString('Ingresá el volumen Na₂S₂O₃ 2.').refine(val => {
-    const n = parseFloat(val.replace(',', '.'))
-    return !Number.isNaN(n) && n >= 0 && n <= 200
-  }, { message: 'Volumen 2: entre 0 y 200 mL.' }),
+  nTiosulfato: requiredDecimalString({
+    required: 'Ingresá la normalidad de tiosulfato.',
+    min: 0.001,
+    max: 2,
+    rangeMessage: 'Tiosulfato: entre 0.001 y 2 mol/L.',
+  }),
+  nKi3: requiredDecimalString({
+    required: 'Ingresá la normalidad del KI₃.',
+    min: 0.001,
+    max: 2,
+    rangeMessage: 'KI₃: entre 0.001 y 2 mol/L.',
+  }),
+  pesoM1: requiredDecimalString({
+    required: 'Ingresá el peso muestra 1.',
+    min: 0.0001,
+    max: 10,
+    rangeMessage: 'Peso muestra 1: entre 0.0001 y 10 g.',
+  }),
+  acidoPctM1: requiredDecimalString({
+    required: 'Ingresá el % ácido ascórbico 1.',
+    min: 0,
+    max: 100,
+    rangeMessage: '% ácido 1: entre 0 y 100.',
+  }),
+  pesoM2: requiredDecimalString({
+    required: 'Ingresá el peso muestra 2.',
+    min: 0.0001,
+    max: 10,
+    rangeMessage: 'Peso muestra 2: entre 0.0001 y 10 g.',
+  }),
+  acidoPctM2: requiredDecimalString({
+    required: 'Ingresá el % ácido ascórbico 2.',
+    min: 0,
+    max: 100,
+    rangeMessage: '% ácido 2: entre 0 y 100.',
+  }),
+  volS2o3_1: requiredDecimalString({
+    required: 'Ingresá el volumen Na₂S₂O₃ 1.',
+    min: 0,
+    max: 200,
+    rangeMessage: 'Volumen 1: entre 0 y 200 mL.',
+  }),
+  volS2o3_2: requiredDecimalString({
+    required: 'Ingresá el volumen Na₂S₂O₃ 2.',
+    min: 0,
+    max: 200,
+    rangeMessage: 'Volumen 2: entre 0 y 200 mL.',
+  }),
 })
 
 export const laboratoryFormSchema = z
   .object({
-    dni: z
-      .string()
-      .transform(s => s.replace(/\D/g, ''))
-      .pipe(
-        z
-          .string()
-          .min(7, 'El DNI debe tener 7 u 8 dígitos.')
-          .max(8, 'El DNI debe tener 7 u 8 dígitos.'),
-      ),
+    dni: dniInputSchema,
     muestraFosfato: requiredString('Ingresá la muestra de fosfatos.'),
-    ph: requiredString('Ingresá el pH inicial.').refine(val => {
-      const n = parseFloat(val.replace(',', '.'))
-      return !Number.isNaN(n) && n >= 0 && n <= 14
-    }, { message: 'El pH debe estar entre 0 y 14.' }),
+    ph: requiredDecimalString({
+      required: 'Ingresá el pH inicial.',
+      min: 0,
+      max: 14,
+      rangeMessage: 'El pH debe estar entre 0 y 14.',
+    }),
     tecnica: z.string().refine(isAcidBaseTechnique, {
       message: 'Seleccioná la técnica de fosfatos.',
     }),
@@ -133,8 +180,15 @@ export const laboratoryFormSchema = z
 
 export type LaboratoryFormValues = z.input<typeof laboratoryFormSchema>
 
+/** Resolver de react-hook-form: toda la validación del formulario pasa por Zod. */
+export const laboratoryFormResolver = zodResolver(laboratoryFormSchema)
+
 export function parseLaboratoryForm(values: LaboratoryFormValues): LaboratoryFormOutput {
   return laboratoryFormSchema.parse(values) as LaboratoryFormOutput
+}
+
+export function firstZodIssueMessage(error: z.ZodError): string {
+  return error.issues[0]?.message ?? 'Valor inválido.'
 }
 
 export const defaultLaboratoryFormValues: LaboratoryFormValues = {

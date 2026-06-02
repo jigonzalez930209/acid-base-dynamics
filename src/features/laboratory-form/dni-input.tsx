@@ -1,4 +1,4 @@
-import { validateDni } from './validation'
+import { dniInputSchema, firstZodIssueMessage } from './schemas'
 
 type Props = {
   id?: string
@@ -39,5 +39,7 @@ export function DniInput({ id, value, onChange, disabled, className, 'aria-inval
 }
 
 export function dniValidationMessage(dni: string): string | null {
-  return validateDni(dni)
+  if (!dni.trim()) return 'Ingresá el DNI (solo números, sin puntos).'
+  const parsed = dniInputSchema.safeParse(dni)
+  return parsed.success ? null : firstZodIssueMessage(parsed.error)
 }
