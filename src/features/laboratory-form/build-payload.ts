@@ -1,6 +1,5 @@
 import { emptyRedoxPayload, redoxToPayload } from './validation'
-import type { RedoxFields } from './types'
-import type { TitrationBlock } from './validation'
+import type { RedoxFields, TitrationFields } from './schemas'
 
 export function emptyAcidBasePayload(): Record<string, string> {
   return {
@@ -18,8 +17,8 @@ export function buildFosfatoPayload(
   muestraFosfato: string,
   ph: string,
   tecnica: string,
-  t1: TitrationBlock,
-  t2: TitrationBlock,
+  t1: TitrationFields,
+  t2: TitrationFields,
 ): Record<string, string> {
   const payload: Record<string, string> = {
     dni: dni.replace(/\D/g, ''),
