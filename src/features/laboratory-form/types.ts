@@ -1,13 +1,6 @@
-export type RedoxFields = {
-  nTiosulfato: string
-  nKi3: string
-  pesoM1: string
-  acidoPctM1: string
-  pesoM2: string
-  acidoPctM2: string
-  volS2o3_1: string
-  volS2o3_2: string
-}
+import type { RedoxFields } from './schemas'
+
+export type { RedoxFields }
 
 export const EMPTY_REDOX: RedoxFields = {
   nTiosulfato: '',
