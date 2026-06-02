@@ -1,12 +1,6 @@
-import type { RedoxFields } from './types'
+import type { RedoxFields, TitrationFields } from './schemas'
 
-export type TitrationBlock = {
-  tipo: string
-  normalidad: string
-  indicador: string
-  v1: string
-  v2: string
-}
+export type TitrationBlock = TitrationFields
 
 function parseNum(val: string): number | null {
   const n = parseFloat(String(val).replace(',', '.').trim())
