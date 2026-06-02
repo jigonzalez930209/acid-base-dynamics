@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button'
 import { RedoxBlock } from './redox-block'
 import { LAB_API_URL, labFetchJson } from './api'
 import { buildFosfatoPayload, buildRedoxPayload } from './build-payload'
-import { INDICADORES, isAcidBaseTechnique } from './constants'
-import { FormField, labInputClassName, labSelectClassName } from './form-field'
+import { INDICADORES, isAcidBaseTechnique, TECNICA_OPTIONS } from './constants'
+import { FormField, labInputClassName } from './form-field'
+import { LabSelect } from './lab-select'
 import {
   defaultLaboratoryFormValues,
   laboratoryFormSchema,
@@ -47,6 +48,7 @@ function TitrationFields({ prefix, title }: { prefix: TitrationPrefix; title: st
   const {
     register,
     watch,
+    control,
     getFieldState,
     formState,
   } = useFormContext<LaboratoryFormValues>()
@@ -82,19 +84,20 @@ function TitrationFields({ prefix, title }: { prefix: TitrationPrefix; title: st
           />
         </FormField>
         <FormField label="Indicador" error={indicadorError}>
-          <select
-            disabled={isSubmitting}
-            aria-invalid={!!indicadorError}
-            className={labSelectClassName}
-            {...register(`${prefix}.indicador`)}
-          >
-            <option value="">Seleccione...</option>
-            {INDICADORES.map(ind => (
-              <option key={ind} value={ind}>
-                {ind}
-              </option>
-            ))}
-          </select>
+          <Controller
+            name={`${prefix}.indicador`}
+            control={control}
+            render={({ field }) => (
+              <LabSelect
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                options={INDICADORES.map(ind => ({ value: ind, label: ind }))}
+                disabled={isSubmitting}
+                aria-invalid={!!indicadorError}
+              />
+            )}
+          />
         </FormField>
         <FormField label="Volumen 1 (mL)" error={v1Error}>
           <input
@@ -294,19 +297,23 @@ export default function LaboratoryForm() {
                   </FormField>
                 </div>
                 <FormField label="Técnica asignada" error={visibleError('tecnica')} className="max-w-md">
-                  <select
-                    disabled={isSubmitting}
-                    aria-invalid={!!visibleError('tecnica')}
-                    className={labSelectClassName}
-                    {...register('tecnica', {
-                      onChange: e => handleTecnicaChange(e.target.value),
-                    })}
-                  >
-                    <option value="">Seleccione...</option>
-                    <option value="1-hcl-1-naoh">1 con HCl y 1 con NaOH</option>
-                    <option value="2-naoh">2 con NaOH</option>
-                    <option value="2-hcl">2 con HCl</option>
-                  </select>
+                  <Controller
+                    name="tecnica"
+                    control={control}
+                    render={({ field }) => (
+                      <LabSelect
+                        value={field.value}
+                        onChange={val => {
+                          field.onChange(val)
+                          handleTecnicaChange(val)
+                        }}
+                        onBlur={field.onBlur}
+                        options={TECNICA_OPTIONS}
+                        disabled={isSubmitting}
+                        aria-invalid={!!visibleError('tecnica')}
+                      />
+                    )}
+                  />
                 </FormField>
 
                 {isAcidBaseTechnique(tecnica) && (
