@@ -39,7 +39,7 @@ export function FormField({ label, error, hint, children, className }: Props) {
 export const labInputClassName =
   'flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive'
 
-export const labSelectClassName = cn(
+export const labSelectTriggerClassName = cn(
   labInputClassName,
-  "appearance-none bg-no-repeat bg-[length:1rem] bg-[position:right_8px_center] pr-9 bg-[url('data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%23737373%27%20stroke-width=%272%27%20stroke-linecap=%27round%27%20stroke-linejoin=%27round%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E')]",
+  'w-full justify-between pr-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
 )
