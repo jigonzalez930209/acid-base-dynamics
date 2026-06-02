@@ -7,11 +7,11 @@ import { RedoxBlock } from './redox-block'
 import { LAB_API_URL, labFetchJson } from './api'
 import { buildFosfatoPayload, buildRedoxPayload } from './build-payload'
 import { INDICADORES, isAcidBaseTechnique } from './constants'
-import { FormField, labInputClassName } from './form-field'
+import { FormField, labInputClassName, labSelectClassName } from './form-field'
 import {
   defaultLaboratoryFormValues,
   laboratoryFormSchema,
-  type LaboratoryFormOutput,
+  parseLaboratoryForm,
   type LaboratoryFormValues,
 } from './schemas'
 import type { TitrationBlock } from './validation'
@@ -34,7 +34,7 @@ async function postLabPayload(payload: Record<string, string>): Promise<LabApiRe
 }
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
-  return <h2 className="text-base font-semibold border-b border-border/60 pb-2">{children}</h2>
+  return <h2 className="text-base font-semibold border-b border-border/60 pb-1.5 mb-1">{children}</h2>
 }
 
 function titrationDefaults(tipo: string): TitrationBlock {
@@ -47,34 +47,45 @@ function TitrationFields({ prefix, title }: { prefix: TitrationPrefix; title: st
   const {
     register,
     watch,
-    formState: { errors, isSubmitting },
+    getFieldState,
+    formState,
   } = useFormContext<LaboratoryFormValues>()
+  const { isSubmitting } = formState
   const tipo = watch(`${prefix}.tipo`)
-  const blockErrors = errors[prefix]
+
+  const fieldError = (name: `${TitrationPrefix}.${'normalidad' | 'indicador' | 'v1' | 'v2'}`) => {
+    const { error, isTouched } = getFieldState(name, formState)
+    return error && (isTouched || formState.isSubmitted) ? error : undefined
+  }
+
+  const normalidadError = fieldError(`${prefix}.normalidad`)
+  const indicadorError = fieldError(`${prefix}.indicador`)
+  const v1Error = fieldError(`${prefix}.v1`)
+  const v2Error = fieldError(`${prefix}.v2`)
 
   return (
-    <fieldset className="border rounded-md p-4 space-y-4">
+    <fieldset className="border rounded-md p-4 space-y-3 md:space-y-4">
       <legend className="text-sm font-semibold px-2">
         {title} ({tipo || '—'})
       </legend>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <FormField label="Normalidad (N)" error={blockErrors?.normalidad}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 items-start gap-x-4 gap-y-3 md:gap-5">
+        <FormField label="Normalidad (N)" error={normalidadError}>
           <input
             type="number"
             step="0.0001"
             min={0.001}
             max={2}
             disabled={isSubmitting}
-            aria-invalid={!!blockErrors?.normalidad}
+            aria-invalid={!!normalidadError}
             className={labInputClassName}
             {...register(`${prefix}.normalidad`)}
           />
         </FormField>
-        <FormField label="Indicador" error={blockErrors?.indicador}>
+        <FormField label="Indicador" error={indicadorError}>
           <select
             disabled={isSubmitting}
-            aria-invalid={!!blockErrors?.indicador}
-            className={labInputClassName}
+            aria-invalid={!!indicadorError}
+            className={labSelectClassName}
             {...register(`${prefix}.indicador`)}
           >
             <option value="">Seleccione...</option>
@@ -85,26 +96,26 @@ function TitrationFields({ prefix, title }: { prefix: TitrationPrefix; title: st
             ))}
           </select>
         </FormField>
-        <FormField label="Volumen 1 (mL)" error={blockErrors?.v1}>
+        <FormField label="Volumen 1 (mL)" error={v1Error}>
           <input
             type="number"
             step="0.01"
             min={0}
             max={200}
             disabled={isSubmitting}
-            aria-invalid={!!blockErrors?.v1}
+            aria-invalid={!!v1Error}
             className={labInputClassName}
             {...register(`${prefix}.v1`)}
           />
         </FormField>
-        <FormField label="Volumen 2 (mL)" error={blockErrors?.v2}>
+        <FormField label="Volumen 2 (mL)" error={v2Error}>
           <input
             type="number"
             step="0.01"
             min={0}
             max={200}
             disabled={isSubmitting}
-            aria-invalid={!!blockErrors?.v2}
+            aria-invalid={!!v2Error}
             className={labInputClassName}
             {...register(`${prefix}.v2`)}
           />
@@ -120,7 +131,8 @@ export default function LaboratoryForm() {
   const methods = useForm<LaboratoryFormValues>({
     resolver: zodResolver(laboratoryFormSchema),
     defaultValues: defaultLaboratoryFormValues,
-    mode: 'onChange',
+    mode: 'onBlur',
+    reValidateMode: 'onBlur',
   })
 
   const {
@@ -130,22 +142,29 @@ export default function LaboratoryForm() {
     watch,
     setValue,
     reset,
-    formState: { errors, isSubmitting },
+    getFieldState,
+    formState,
   } = methods
+
+  const { isSubmitting } = formState
+
+  const visibleError = <K extends keyof LaboratoryFormValues>(name: K) => {
+    const { error, isTouched } = getFieldState(name, formState)
+    return error && (isTouched || formState.isSubmitted) ? error : undefined
+  }
 
   const tecnica = watch('tecnica')
 
   const handleTecnicaChange = (val: string) => {
-    setValue('tecnica', val, { shouldValidate: true })
     if (val === '1-hcl-1-naoh') {
-      setValue('t1', titrationDefaults('HCl'), { shouldValidate: true })
-      setValue('t2', titrationDefaults('NaOH'), { shouldValidate: true })
+      setValue('t1', titrationDefaults('HCl'))
+      setValue('t2', titrationDefaults('NaOH'))
     } else if (val === '2-hcl') {
-      setValue('t1', titrationDefaults('HCl'), { shouldValidate: true })
-      setValue('t2', titrationDefaults('HCl'), { shouldValidate: true })
+      setValue('t1', titrationDefaults('HCl'))
+      setValue('t2', titrationDefaults('HCl'))
     } else if (val === '2-naoh') {
-      setValue('t1', titrationDefaults('NaOH'), { shouldValidate: true })
-      setValue('t2', titrationDefaults('NaOH'), { shouldValidate: true })
+      setValue('t1', titrationDefaults('NaOH'))
+      setValue('t2', titrationDefaults('NaOH'))
     }
   }
 
@@ -153,7 +172,7 @@ export default function LaboratoryForm() {
     setFeedback({ type: 'info', message: 'Validando DNI y enviando…' })
 
     try {
-      const parsed: LaboratoryFormOutput = laboratoryFormSchema.parse(values)
+      const parsed = parseLaboratoryForm(values)
       const fosfatoPayload = buildFosfatoPayload(
         parsed.dni,
         parsed.muestraFosfato,
@@ -220,11 +239,11 @@ export default function LaboratoryForm() {
         </CardHeader>
         <CardContent>
           <FormProvider {...methods}>
-            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-8" noValidate>
-              <section className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6 md:space-y-8" noValidate>
+              <section className="space-y-3">
                 <SectionHeading>Datos generales</SectionHeading>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField label="DNI (sin puntos)" error={errors.dni}>
+                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-5">
+                  <FormField label="DNI (sin puntos)" error={visibleError('dni')}>
                     <Controller
                       name="dni"
                       control={control}
@@ -236,7 +255,7 @@ export default function LaboratoryForm() {
                           maxLength={8}
                           autoComplete="off"
                           disabled={isSubmitting}
-                          aria-invalid={!!errors.dni}
+                          aria-invalid={!!visibleError('dni')}
                           className={labInputClassName}
                           placeholder="Ej: 12345678"
                           value={field.value}
@@ -249,38 +268,39 @@ export default function LaboratoryForm() {
                 </div>
               </section>
 
-              <section className="space-y-4">
+              <section className="space-y-3">
                 <SectionHeading>Titulación de fosfatos (ácido-base)</SectionHeading>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
-                  <FormField label="Muestra fosfatos" error={errors.muestraFosfato}>
+                <div className="grid grid-cols-1 md:grid-cols-2 items-start gap-x-4 gap-y-3 md:gap-5 max-w-2xl">
+                  <FormField label="Muestra fosfatos" error={visibleError('muestraFosfato')}>
                     <input
                       type="text"
                       disabled={isSubmitting}
-                      aria-invalid={!!errors.muestraFosfato}
+                      aria-invalid={!!visibleError('muestraFosfato')}
                       className={labInputClassName}
                       {...register('muestraFosfato')}
                     />
                   </FormField>
-                  <FormField label="pH inicial" error={errors.ph}>
+                  <FormField label="pH inicial" error={visibleError('ph')}>
                     <input
                       type="number"
                       step="0.01"
                       min={0}
                       max={14}
                       disabled={isSubmitting}
-                      aria-invalid={!!errors.ph}
+                      aria-invalid={!!visibleError('ph')}
                       className={labInputClassName}
                       {...register('ph')}
                     />
                   </FormField>
                 </div>
-                <FormField label="Técnica asignada" error={errors.tecnica} className="max-w-md">
+                <FormField label="Técnica asignada" error={visibleError('tecnica')} className="max-w-md">
                   <select
                     disabled={isSubmitting}
-                    aria-invalid={!!errors.tecnica}
-                    className={labInputClassName}
-                    value={tecnica}
-                    onChange={e => handleTecnicaChange(e.target.value)}
+                    aria-invalid={!!visibleError('tecnica')}
+                    className={labSelectClassName}
+                    {...register('tecnica', {
+                      onChange: e => handleTecnicaChange(e.target.value),
+                    })}
                   >
                     <option value="">Seleccione...</option>
                     <option value="1-hcl-1-naoh">1 con HCl y 1 con NaOH</option>
@@ -290,18 +310,15 @@ export default function LaboratoryForm() {
                 </FormField>
 
                 {isAcidBaseTechnique(tecnica) && (
-                  <div className="space-y-6">
+                  <div className="space-y-4 md:space-y-5">
                     <TitrationFields prefix="t1" title="Primera valoración" />
                     <TitrationFields prefix="t2" title="Segunda valoración" />
                   </div>
                 )}
               </section>
 
-              <section className="space-y-4">
+              <section className="space-y-3">
                 <SectionHeading>Titulación Redox</SectionHeading>
-                <p className="text-sm text-muted-foreground">
-                  Muestra Redox propia (no usa el pH ni la muestra de fosfatos).
-                </p>
                 <RedoxBlock />
               </section>
 
