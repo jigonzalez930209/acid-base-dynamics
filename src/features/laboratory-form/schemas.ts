@@ -1,6 +1,36 @@
 import { z } from 'zod'
 import { isAcidBaseTechnique } from './constants'
 
+export type TitrationFields = {
+  tipo: string
+  normalidad: string
+  indicador: string
+  v1: string
+  v2: string
+}
+
+export type RedoxFields = {
+  nTiosulfato: string
+  nKi3: string
+  pesoM1: string
+  acidoPctM1: string
+  pesoM2: string
+  acidoPctM2: string
+  volS2o3_1: string
+  volS2o3_2: string
+}
+
+export type LaboratoryFormOutput = {
+  dni: string
+  muestraFosfato: string
+  ph: string
+  tecnica: string
+  t1: TitrationFields
+  t2: TitrationFields
+  muestraRedox: string
+  redox: RedoxFields
+}
+
 const requiredString = (msg: string) => z.string().trim().min(1, msg)
 
 const titrationSchema = z.object({
@@ -102,7 +132,10 @@ export const laboratoryFormSchema = z
   })
 
 export type LaboratoryFormValues = z.input<typeof laboratoryFormSchema>
-export type LaboratoryFormOutput = z.infer<typeof laboratoryFormSchema>
+
+export function parseLaboratoryForm(values: LaboratoryFormValues): LaboratoryFormOutput {
+  return laboratoryFormSchema.parse(values) as LaboratoryFormOutput
+}
 
 export const defaultLaboratoryFormValues: LaboratoryFormValues = {
   dni: '',
