@@ -628,8 +628,8 @@ function validarRedox_(d) {
   if (!enRango_(d.redox_n_ki3, 0.001, 2)) return 'Normalidad del KI₃ fuera de rango (0.001–2 mol/L).';
   if (!enRango_(d.redox_peso_m1, 0.0001, 10)) return 'Peso muestra 1 inválido (0.0001–10 g).';
   if (!enRango_(d.redox_peso_m2, 0.0001, 10)) return 'Peso muestra 2 inválido (0.0001–10 g).';
-  if (!enRango_(d.redox_acido_pct_m1, 0, 100)) return 'Ácido ascórbico % 1 inválido (0–100).';
-  if (!enRango_(d.redox_acido_pct_m2, 0, 100)) return 'Ácido ascórbico % 2 inválido (0–100).';
+  if (!enRango_(d.redox_acido_pct_m1, 0, 200)) return 'Ácido ascórbico % 1 inválido (0–200).';
+  if (!enRango_(d.redox_acido_pct_m2, 0, 200)) return 'Ácido ascórbico % 2 inválido (0–200).';
   if (!enRango_(d.redox_vol_s2o3_1, 0, 200)) return 'Volumen Na₂S₂O₃ 1 inválido (0–200 mL).';
   if (!enRango_(d.redox_vol_s2o3_2, 0, 200)) return 'Volumen Na₂S₂O₃ 2 inválido (0–200 mL).';
   return null;

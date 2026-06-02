@@ -36,7 +36,7 @@ Fórmulas personalizadas (Datos → Validación de datos), fila 2 en adelante:
 | pH | `=Y(D2>=0;D2<=14)` |
 | Normalidad (E,F) | `=Y(E2>0;E2<=2)` |
 | Peso (G,I) | `=Y(G2>0;G2<=10)` |
-| % ascórbico (H,J) | `=Y(H2>=0;H2<=100)` |
+| % ascórbico (H,J) | `=Y(H2>=0;H2<=200)` |
 | Volumen (K,L) | `=Y(K2>=0;K2<=200)` |
 | % diff. volúmenes (M) | `=SI(Y(K2>0;L2>0);ABS(K2-L2)/((K2+L2)/2)*100;"")` |
 

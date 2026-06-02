@@ -50,7 +50,7 @@ Ver [`validation.ts`](../src/features/laboratory-form/validation.ts):
 - pH: 0–14
 - Normalidades: 0.001–2 mol/L
 - Pesos muestra: 0.0001–10 g
-- % ácido ascórbico: 0–100
+- % ácido ascórbico: 0–200 (puede superar 100 % en resultados experimentales)
 - Volúmenes: 0–200 mL
 
 ## Google Sheets / Apps Script
